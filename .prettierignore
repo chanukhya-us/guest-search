@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+.vitest/
+logs/
+package-lock.json
+# Supplied artefacts are kept byte-for-byte as received.
+schemas/
+samples/
+# Canonical XML fixtures and snapshots: byte-exact, compared after canonicalization.
+**/test/fixtures/**/*.xml
+**/__snapshots__/**/*.xml

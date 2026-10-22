@@ -1,0 +1,111 @@
+# CI for IHG Guest Search (Req 26.1-26.4).
+#
+# Location: this project is its own repository root. If it is ever nested inside a larger
+# repository, move this file to <repo-root>/.github/workflows/ and set
+# `defaults.run.working-directory` (and the cache-dependency-path) to the project path.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 22.x
+  CI: true
+
+jobs:
+  verify:
+    name: Verify (types, lint, format, tests, build, e2e)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install from lockfile
+        run: npm ci
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format:check
+
+      - name: Unit, property and integration tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          if-no-files-found: ignore
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests with accessibility scans
+        run: npm run test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            **/playwright-report/
+            **/test-results/
+          if-no-files-found: ignore
+
+  security:
+    name: Supply chain and secrets
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Full history so the secret scan covers every commit, not just the tip.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install from lockfile
+        run: npm ci
+
+      - name: Dependency audit (fail on high or critical)
+        run: npm audit --audit-level=high
+
+      - name: XML library gate (@xmldom/xmldom >= 0.9.12, no libxmljs2)
+        run: npm run check:deps
+
+      - name: Secret scan (gitleaks)
+        # Pinned image; runs the open-source CLI directly (no gitleaks-action licence needed).
+        run: >-
+          docker run --rm -v "$PWD:/repo" -w /repo
+          ghcr.io/gitleaks/gitleaks:v8.28.0
+          git --redact --verbose --exit-code 1 /repo

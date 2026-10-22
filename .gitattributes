@@ -1,0 +1,9 @@
+# Normalize all text files to LF in the repository and working tree (matches Prettier).
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
