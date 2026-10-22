@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" aria-hidden="true">
+  <!-- Original abstract illustration: profile cards under a magnifier (decorative). -->
+  <circle cx="120" cy="92" r="78" fill="#eef3f6"/>
+  <g>
+    <rect x="44" y="58" width="104" height="58" rx="10" fill="#ffffff" stroke="#c2c7ca"/>
+    <circle cx="66" cy="80" r="11" fill="#bfdbe8"/>
+    <rect x="84" y="73" width="46" height="6" rx="3" fill="#1f4456" fill-opacity="0.8"/>
+    <rect x="84" y="85" width="34" height="5" rx="2.5" fill="#707372" fill-opacity="0.5"/>
+    <rect x="56" y="100" width="78" height="5" rx="2.5" fill="#c2c7ca"/>
+  </g>
+  <g>
+    <rect x="92" y="96" width="104" height="58" rx="10" fill="#ffffff" stroke="#c2c7ca"/>
+    <circle cx="114" cy="118" r="11" fill="#e8542c" fill-opacity="0.25"/>
+    <rect x="132" y="111" width="46" height="6" rx="3" fill="#1f4456" fill-opacity="0.8"/>
+    <rect x="132" y="123" width="30" height="5" rx="2.5" fill="#707372" fill-opacity="0.5"/>
+    <rect x="104" y="138" width="80" height="5" rx="2.5" fill="#c2c7ca"/>
+  </g>
+  <g fill="none" stroke-linecap="round">
+    <circle cx="170" cy="62" r="24" stroke="#1f4456" stroke-width="7"/>
+    <circle cx="170" cy="62" r="24" fill="#ffffff" fill-opacity="0.55" stroke="none"/>
+    <path d="M187 80 L206 99" stroke="#1f4456" stroke-width="9"/>
+    <path d="M159 54 A13 13 0 0 1 176 49" stroke="#e8542c" stroke-width="3"/>
+  </g>
+  <circle cx="38" cy="40" r="4" fill="#e8542c"/>
+  <circle cx="212" cy="138" r="3" fill="#1f4456" fill-opacity="0.4"/>
+  <circle cx="28" cy="132" r="2.5" fill="#1f4456" fill-opacity="0.3"/>
+</svg>

@@ -39,6 +39,38 @@ Fastify, its plugins, pino, the OpenTelemetry packages, TypeScript (5.x/6.x; ado
 
 ## Architecture
 
+### Deployment topology (local dev vs production)
+
+The same BFF binary runs in both modes; only what it talks to and what it serves changes.
+
+```mermaid
+flowchart TB
+  subgraph Dev["Local development (no Docker)"]
+    direction TB
+    DW["Vite dev server :5173<br/>proxies /api, /health"]
+    DB["Fastify BFF :3000<br/>AUTH_MODE=dev, persona jane.doe"]
+    DM["Node mock SOAP :8080<br/>~60 synthetic guests"]
+    DWM["optional WireMock :8080<br/>fixture bytes, Docker"]
+    DW -->|same-origin JSON| DB
+    DB -->|SOAP/XML| DM
+    DB -.->|SOAP/XML, opt-in| DWM
+  end
+
+  subgraph Prod["Production (not built yet - target)"]
+    direction TB
+    PB["Fastify BFF<br/>serves apps/web/dist SPA + /api"]
+    PS["Real SOAP service<br/>WSDL/XSD - blocked B1"]
+    PI["OIDC IdP<br/>blocked B5/B6"]
+    PB -->|SOAP/XML + WS-Security/mTLS| PS
+    PB -.->|authenticate| PI
+  end
+
+  classDef blocked stroke-dasharray:4 3;
+  class DWM,PS,PI blocked;
+```
+
+In dev the SPA is a separate Vite process that proxies to the BFF; in production the BFF serves the built SPA from the same origin via `@fastify/static`. Dashed nodes are either opt-in (WireMock) or still blocked on external inputs (real SOAP, OIDC).
+
 ### Component diagram
 
 ```mermaid
@@ -134,6 +166,53 @@ routes  →  services  →  ports (interfaces)  ←  adapters (soap/)
 ## Components and Interfaces
 
 ### packages/shared
+
+The normalized domain model shared across the BFF and the web app. A guest owns zero-or-more of each contact type; the API wraps a (masked) `GuestSearchResult` as a `GuestSummary` with its selected primaries and an optional reveal token.
+
+```mermaid
+classDiagram
+  class GuestSearchResult {
+    +string enterpriseId
+    +number score
+    +string status
+    +string firstName
+    +string lastName
+  }
+  class GuestAddress {
+    +string line1
+    +string city
+    +string stateOrRegion
+    +string postalCode
+    +string country
+    +bool profileDefault
+  }
+  class GuestPhone {
+    +string number
+    +string type
+    +bool profileDefault
+  }
+  class GuestEmail {
+    +string address
+    +bool profileDefault
+  }
+  class GuestMembership {
+    +string memberId
+    +string memberType
+    +string status
+  }
+  class GuestSummary {
+    +string revealToken
+  }
+  GuestSearchResult o-- GuestAddress
+  GuestSearchResult o-- GuestPhone
+  GuestSearchResult o-- GuestEmail
+  GuestSearchResult o-- GuestMembership
+  GuestSummary *-- GuestSearchResult : guest (masked)
+  GuestSummary --> GuestAddress : primary.address
+  GuestSummary --> GuestPhone : primary.phone
+  GuestSummary --> GuestEmail : primary.email
+  GuestSummary --> GuestMembership : primary.membership
+```
 
 ```ts
 // criteria.schema.ts
@@ -333,6 +412,40 @@ export class MemoryRevealStore implements RevealStore { /* Map + clock injection
 
 `enterpriseIdHash` = HMAC-SHA256(sessionSecret, enterpriseId), truncated to 16 hex characters. It is used only for audit (Req 14.10).
 
+### Reveal (PII) sequence
+
+Reveal is a second round trip. The unmasked values were cached server-side during the search (only if the principal holds the reveal role); the browser exchanges a short-lived, session-bound token for them and they are never persisted client-side.
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant UI as Web_UI
+  participant F as Fastify plugins
+  participant R as reveal route
+  participant S as GuestSearchService
+  participant RS as RevealStore
+  participant A as AuditLogger
+  UI->>F: POST /api/v1/guests/reveal {token} + X-Requested-With
+  F->>F: session, auth, role RevealPII, CSRF, rate limit
+  alt missing reveal role
+    F-->>UI: 403 FORBIDDEN
+  else authorized
+    F->>R: { token }
+    R->>S: reveal(token, ctx{sessionId})
+    S->>RS: consume(token, sessionId)
+    alt unknown / expired / other session
+      RS-->>S: null
+      S-->>R: AppError REVEAL_EXPIRED
+      R-->>UI: 400 REVEAL_EXPIRED (shown inline)
+    else hit (not deleted; re-reveal allowed until TTL)
+      RS-->>S: RevealEntry { phones, emails }
+      S->>A: audit guest.reveal { enterpriseIdHash }
+      S-->>R: RevealResponse { phones, emails }
+      R-->>UI: 200 JSON (Cache-Control: no-store)
+    end
+  end
+```
+
 ### apps/bff — SOAP adapter (`src/soap/`)
 
 #### contract.ts (Req 7)
@@ -462,6 +575,24 @@ Behaviour:
   - After `failureThreshold` (default 5) consecutive failures it opens for `openMs` (default 30 s). While open it throws `UPSTREAM_UNAVAILABLE` immediately.
   - In half-open state, one trial request is allowed. Success closes the breaker; failure reopens it.
   - The state is exported as a gauge.
+
+**Circuit breaker states** (closed to open to half-open). Only `UPSTREAM_TIMEOUT` and `UPSTREAM_UNAVAILABLE` count as failures; everything else passes through without tripping it.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Closed
+  Closed --> Closed: success / reset count
+  Closed --> Closed: countable failure (count < threshold)
+  Closed --> Open: countable failure (count == threshold)
+  Open --> Open: any call (fail fast UPSTREAM_UNAVAILABLE)
+  Open --> HalfOpen: openMs elapsed
+  HalfOpen --> Closed: trial succeeds
+  HalfOpen --> Open: trial fails
+```
+
+- gauge values: `0` Closed, `1` HalfOpen, `2` Open.
+- `failureThreshold` default 5 consecutive failures; `openMs` default 30 s.
+- In half-open, exactly one trial request is admitted.
 
 #### responseParser.ts (Req 11, 12)
 
@@ -659,6 +790,21 @@ Inter is installed as `@fontsource-variable/inter`, pinned, bundled by Vite and 
 ```
 
 ### Server-side state
+
+Session and reveal-token lifecycle (both in-memory, single-instance; Redis is the named follow-up). Reveal tokens are bound to a session and dropped when that session ends.
+
+```mermaid
+flowchart TB
+  A["First request<br/>no session cookie"] --> B["create session<br/>signed cookie"]
+  B --> C["search with Reveal role<br/>RevealStore.issue()"]
+  C --> D["reveal token rt_...<br/>TTL 10 min, session-bound"]
+  D -->|consume within TTL| E["return unmasked phones/emails<br/>not deleted - re-reveal OK"]
+  D -->|TTL elapsed| X["REVEAL_EXPIRED"]
+  B -->|idle 30 min / absolute 8 h| Y["session expires"]
+  B -->|POST /session/logout| Z["dropSession()<br/>Clear-Site-Data"]
+  Y --> W["tokens for session unusable"]
+  Z --> W
+```
 
 | Store | Key | Value | TTL | Interface |
 |---|---|---|---|---|

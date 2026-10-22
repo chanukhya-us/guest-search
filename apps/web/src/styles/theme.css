@@ -1,0 +1,106 @@
+/*
+ * Tailwind v4 CSS-first theme (Req 23.1).
+ *
+ * Maps the brand tokens (tokens.css) to Tailwind theme variables with `@theme inline`,
+ * so components get token-backed utilities and never hard-code hex:
+ *   bg-primary / bg-primary-hover   ->  --ihg-orange-600 / --ihg-orange-800
+ *   bg-navy / text-navy / border-navy / ring-navy  ->  --ihg-navy-700
+ *   text-body / text-muted, bg-surface / bg-surface-2 / bg-row-hover
+ *   border-border / border-border-strong
+ *   text-error / bg-error-wash, text-success
+ *   rounded-control / rounded-chip / rounded-card
+ *   shadow-header / shadow-panel
+ *
+ * `inline` keeps the utilities referencing the CSS variables (so a token change
+ * flows through at runtime) rather than inlining the resolved value.
+ */
+@import 'tailwindcss';
+
+@theme inline {
+  --color-primary: var(--ihg-orange-600);
+  --color-primary-hover: var(--ihg-orange-800);
+  --color-decorative: var(--ihg-orange-500);
+
+  --color-navy: var(--ihg-navy-700);
+  --color-navy-tint: var(--ihg-navy-100);
+  --color-navy-wash: var(--ihg-navy-50);
+  --color-navy-deep: var(--ihg-navy-900);
+
+  --color-strong: var(--text-strong);
+  --color-body: var(--text-body);
+  --color-text-2: var(--text-2);
+  --color-muted: var(--text-muted);
+
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-row-hover: var(--row-hover);
+
+  --color-error: var(--error-600);
+  --color-error-wash: var(--error-50);
+  --color-success: var(--success-700);
+
+  --font-sans: var(--font-sans);
+
+  --radius-control: var(--radius-control);
+  --radius-chip: var(--radius-chip);
+  --radius-card: var(--radius-card);
+
+  --shadow-header: var(--shadow-header);
+  --shadow-panel: var(--shadow-panel);
+}
+
+@layer base {
+  html {
+    /* Req 24.7: keep a focused element clear of the two sticky header bars. */
+    scroll-padding-top: calc(var(--header-utility-h) + var(--header-brand-h));
+  }
+
+  body {
+    font-family: var(--font-sans);
+    color: var(--text-body);
+    background-color: var(--surface-2);
+    /* 16px body text per the brand type scale. */
+    font-size: 1rem;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /*
+   * Visible focus indicator for every interactive element (Req 23.9, 24.3, 24.4):
+   * a 2px navy outline with a 2px offset. Never removed.
+   */
+  :focus-visible {
+    outline: 2px solid var(--ihg-navy-700);
+    outline-offset: 2px;
+  }
+
+  /*
+   * Minimum interactive target size (Req 24.6): 24x24 CSS px. Component styles set
+   * larger targets (48px buttons, 44-48px inputs); this is the floor for anything
+   * interactive that does not opt out.
+   */
+  button,
+  a[href],
+  input,
+  select,
+  textarea,
+  [role='button'] {
+    min-height: 24px;
+    min-width: 24px;
+  }
+
+  /* Honour reduced-motion preferences (ihg-brand-ui rule; WCAG 2.3.3). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

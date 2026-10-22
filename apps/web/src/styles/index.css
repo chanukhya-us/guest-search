@@ -1,0 +1,11 @@
+/*
+ * Global stylesheet entry (imported once from main.tsx).
+ * Order matters:
+ *   1. fonts  - register self-hosted Inter @font-face (Req 21.9, 23.3)
+ *   2. tokens - define the brand CSS custom properties (Req 23.2)
+ *   3. theme  - import Tailwind and map tokens to utilities + base styles (Req 23.1)
+ */
+@import './fonts.css';
+@import './tokens.css';
+@import './theme.css';
+@import './effects.css';

@@ -36,10 +36,19 @@ export default tseslint.config(
     },
   },
   {
-    // Node CLI scripts run outside the TS build; declare the Node globals they use.
-    files: ['scripts/**/*.{mjs,ts}'],
+    // Node CLI scripts and dev tooling run outside the TS build; declare the Node globals they
+    // use (the mock SOAP server, the dev:all spawner, the fixture generator and the dep gate).
+    files: ['scripts/**/*.{mjs,ts}', 'tools/**/*.ts'],
     languageOptions: {
-      globals: { process: 'readonly', console: 'readonly' },
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        Buffer: 'readonly',
+        URL: 'readonly',
+        fetch: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+      },
     },
   },
   {
@@ -66,6 +75,27 @@ export default tseslint.config(
           message: XML_MESSAGE,
         },
       ],
+    },
+  },
+  {
+    // Playwright E2E + accessibility sources (task 13.3). They run in the Playwright runner
+    // (Node globals) but also contain browser-side `page.evaluate` callbacks that reference DOM
+    // globals (document, getComputedStyle, HTMLElement). Declare both so no-undef stays quiet
+    // without turning the rule off project-wide.
+    files: ['e2e/**/*.ts'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        setTimeout: 'readonly',
+        clearTimeout: 'readonly',
+        document: 'readonly',
+        window: 'readonly',
+        getComputedStyle: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        RegExp: 'readonly',
+      },
     },
   },
   {

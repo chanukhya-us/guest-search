@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" aria-hidden="true">
+  <!-- Original abstract illustration: an empty, dashed result slot (decorative). -->
+  <circle cx="100" cy="82" r="66" fill="#eef3f6"/>
+  <rect x="48" y="52" width="104" height="62" rx="12" fill="#ffffff" stroke="#c2c7ca" stroke-dasharray="6 6" stroke-width="1.5"/>
+  <rect x="64" y="70" width="44" height="6" rx="3" fill="#c2c7ca"/>
+  <rect x="64" y="84" width="72" height="5" rx="2.5" fill="#c2c7ca" fill-opacity="0.6"/>
+  <rect x="64" y="96" width="56" height="5" rx="2.5" fill="#c2c7ca" fill-opacity="0.6"/>
+  <g fill="none" stroke="#1f4456" stroke-linecap="round">
+    <circle cx="140" cy="46" r="17" stroke-width="5"/>
+    <path d="M152 59 L165 72" stroke-width="7"/>
+    <path d="M134 40 L146 52 M146 40 L134 52" stroke="#e8542c" stroke-width="3"/>
+  </g>
+  <circle cx="36" cy="44" r="3.5" fill="#e8542c"/>
+  <circle cx="170" cy="122" r="3" fill="#1f4456" fill-opacity="0.35"/>
+</svg>

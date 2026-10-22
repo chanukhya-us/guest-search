@@ -1,0 +1,23 @@
+# WireMock SOAP stub — the DOCUMENTED, OPTIONAL alternative to the default Node mock
+# (tools/mock-soap). The local MVP defaults to the zero-Docker Node mock (`npm run dev:all`);
+# use this only when you want a container-based stub that serves the exact committed fixture
+# bytes (task 13.1, design.md "Local development" / WireMock).
+#
+#   npm run stub:up      # docker compose -f tools/wiremock/docker-compose.dev.yml up -d
+#   npm run stub:down
+#
+# Then point the BFF at it:  SOAP_ENDPOINT=http://localhost:8080/InitiateService
+#
+# Mounts:
+#   ./mappings                         -> /home/wiremock/mappings   (scenario selection)
+#   ../../apps/bff/test/fixtures/soap  -> /home/wiremock/__files     (response bodies)
+services:
+  wiremock:
+    image: wiremock/wiremock:3.13.2
+    container_name: ihg-guest-search-wiremock
+    command: ['--port', '8080', '--verbose', '--global-response-templating']
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./mappings:/home/wiremock/mappings:ro
+      - ../../apps/bff/test/fixtures/soap:/home/wiremock/__files:ro

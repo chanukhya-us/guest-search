@@ -1,0 +1,13 @@
+/*
+ * Self-hosted Inter (Req 21.9, 23.3).
+ *
+ * @fontsource-variable/inter ships the @font-face rules and the woff2 files as an
+ * npm dependency (pinned in package.json). Vite bundles the woff2 into the app build,
+ * so the font is served from the application origin - no external font CDN. This is
+ * what lets the BFF set a strict CSP with font-src 'self' (Req 21.9).
+ *
+ * The package's default export (index.css) registers the full variable axis
+ * (weights 100-900 in one variable woff2 per subset) under the family name
+ * "Inter Variable", matching --font-sans in tokens.css.
+ */
+@import '@fontsource-variable/inter';

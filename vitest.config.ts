@@ -1,4 +1,6 @@
 // Root Vitest config: one run, three projects, one coverage report (Req 25.1, 25.10).
+import { fileURLToPath } from 'node:url';
+
 import { defaultClientConditions, defaultServerConditions } from 'vite';
 import { defineConfig } from 'vitest/config';
 
@@ -9,6 +11,24 @@ const SOURCE_CONDITION = '@ihg-guest-search/source';
 export default defineConfig({
   resolve: {
     conditions: [SOURCE_CONDITION, ...defaultClientConditions],
+    alias: [
+      // `@opentelemetry/semantic-conventions` 1.43.0 ships an ESM build whose index uses
+      // extensionless directory re-exports (`export * from './trace'`) and declares no `import`
+      // condition, so resolving its `module` build fails under Vitest with an unsupported
+      // directory import. Pin every import of it to its complete, Node-compatible CommonJS build.
+      // Combined with inlining the OpenTelemetry packages (below) this also rewrites their internal
+      // imports of it. Production (`node dist`) already resolves to this CJS build via the package
+      // `default` condition, so the change only harmonises test resolution.
+      {
+        find: /^@opentelemetry\/semantic-conventions$/,
+        replacement: fileURLToPath(
+          new URL(
+            './node_modules/@opentelemetry/semantic-conventions/build/src/index.js',
+            import.meta.url,
+          ),
+        ),
+      },
+    ],
   },
   ssr: {
     resolve: {
@@ -16,6 +36,14 @@ export default defineConfig({
     },
   },
   test: {
+    server: {
+      deps: {
+        // Inline the OpenTelemetry packages so Vite (not Node's external loader) resolves their
+        // internal imports, routing `@opentelemetry/semantic-conventions` through the CJS alias
+        // above and sidestepping that package's broken ESM directory re-exports.
+        inline: [/@opentelemetry[/\\]/],
+      },
+    },
     projects: [
       {
         extends: true,
@@ -42,6 +70,7 @@ export default defineConfig({
           root: './apps/web',
           environment: 'jsdom',
           include: ['test/**/*.test.{ts,tsx}'],
+          setupFiles: ['./test/setup.ts'],
         },
       },
       {
@@ -52,6 +81,17 @@ export default defineConfig({
           root: './scripts',
           environment: 'node',
           include: ['**/*.test.{mjs,ts}'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          // Dev tooling: the local Node mock SOAP server (task 13.1). Not shipped; excluded
+          // from the coverage include globs (apps/*/src, packages/*/src) by location.
+          name: 'tools',
+          root: './tools',
+          environment: 'node',
+          include: ['**/*.test.ts'],
         },
       },
     ],

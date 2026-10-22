@@ -1,0 +1,14 @@
+{
+  // Type-checks the dev tooling under tools/ (task 13.1: the Node mock SOAP server and its test).
+  // These files run under `node --experimental-strip-types`, so only erasable syntax is allowed
+  // in the shipped .ts (the test may use anything). Local imports use the .ts extension
+  // (allowImportingTsExtensions); imports of the BFF SOAP source use .js and resolve through the
+  // @ihg-guest-search/source condition, same as the Vitest/Vite setup.
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "types": ["node"]
+  },
+  "include": ["."]
+}

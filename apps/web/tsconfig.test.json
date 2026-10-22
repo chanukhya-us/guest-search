@@ -1,4 +1,10 @@
 {
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Tests run in the Vitest/jsdom runtime on Node, so they may use Node APIs
+    // (e.g. reading a stylesheet for the brand-token sanity check) and Vitest's
+    // import.meta.env. vite/client is inherited from tsconfig.json.
+    "types": ["vite/client", "node", "@testing-library/jest-dom"]
+  },
   "include": ["src", "test"]
 }

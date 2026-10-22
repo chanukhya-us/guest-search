@@ -14,17 +14,23 @@
   ],
   "scripts": {
     "build": "npm run build --workspaces --if-present",
-    "typecheck": "tsc -p tsconfig.json && npm run typecheck --workspaces --if-present",
+    "typecheck": "tsc -p tsconfig.json && tsc -p tools/tsconfig.json && tsc -p e2e/tsconfig.json && npm run typecheck --workspaces --if-present",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "npm run test:e2e --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "e2e:stack": "node scripts/e2e-stack.mjs",
     "check:deps": "node scripts/check-deps.mjs",
     "gen:fixtures": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/gen-fixtures.ts",
-    "dev": "npm run dev --workspaces --if-present"
+    "mock:soap": "node --experimental-strip-types --disable-warning=ExperimentalWarning tools/mock-soap/server.ts",
+    "build:backend": "npm run build --workspace=@ihg-guest-search/shared && npm run build --workspace=@ihg-guest-search/bff",
+    "dev": "npm run dev --workspaces --if-present",
+    "dev:all": "node scripts/dev-all.mjs",
+    "stub:up": "docker compose -f tools/wiremock/docker-compose.dev.yml up -d",
+    "stub:down": "docker compose -f tools/wiremock/docker-compose.dev.yml down"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

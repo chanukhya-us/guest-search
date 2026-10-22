@@ -1,0 +1,18 @@
+{
+  // Type-check scope for the Playwright E2E + accessibility sources (task 13.3). Separate from
+  // the app projects (which are jsdom/node Vitest) because these run in the Playwright runner and
+  // use both Node and DOM lib types: the specs call page.evaluate(() => document…) where the body
+  // is serialised and executed in the browser, so `document`/`getComputedStyle` must type-check.
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    // DOM for the in-browser page.evaluate callbacks; Node for the runner-side code.
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    // The shared config customCondition is not needed here; these specs import no workspace src.
+    "customConditions": []
+  },
+  "include": ["**/*.ts", "../playwright.config.ts"]
+}

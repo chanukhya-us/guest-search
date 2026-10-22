@@ -1,0 +1,170 @@
+{
+  "mappings": [
+    {
+      "priority": 1,
+      "name": "single-guest",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService",
+        "matchesXPath": {
+          "expression": "//in:surname[normalize-space(text())='Single']",
+          "xPathNamespaces": {
+            "in": "http://common.crm.ihg.com/schema/v1_0/complex"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "text/xml; charset=utf-8" },
+        "bodyFileName": "response-single.xml"
+      }
+    },
+    {
+      "priority": 1,
+      "name": "many-guests",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService",
+        "matchesXPath": {
+          "expression": "//in:surname[normalize-space(text())='Many']",
+          "xPathNamespaces": {
+            "in": "http://common.crm.ihg.com/schema/v1_0/complex"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "text/xml; charset=utf-8" },
+        "bodyFileName": "response-60-guests.xml"
+      }
+    },
+    {
+      "priority": 1,
+      "name": "empty-result",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService",
+        "matchesXPath": {
+          "expression": "//in:surname[normalize-space(text())='Nobody']",
+          "xPathNamespaces": {
+            "in": "http://common.crm.ihg.com/schema/v1_0/complex"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "text/xml; charset=utf-8" },
+        "bodyFileName": "response-empty.xml"
+      }
+    },
+    {
+      "priority": 1,
+      "name": "soap-fault",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService",
+        "matchesXPath": {
+          "expression": "//in:surname[normalize-space(text())='Fault']",
+          "xPathNamespaces": {
+            "in": "http://common.crm.ihg.com/schema/v1_0/complex"
+          }
+        }
+      },
+      "response": {
+        "status": 500,
+        "headers": { "Content-Type": "text/xml; charset=utf-8" },
+        "bodyFileName": "fault-server.xml"
+      }
+    },
+    {
+      "priority": 1,
+      "name": "failure-status",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService",
+        "matchesXPath": {
+          "expression": "//in:surname[normalize-space(text())='Broken']",
+          "xPathNamespaces": {
+            "in": "http://common.crm.ihg.com/schema/v1_0/complex"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "text/xml; charset=utf-8" },
+        "bodyFileName": "response-failure-status.xml"
+      }
+    },
+    {
+      "priority": 1,
+      "name": "malformed-response",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService",
+        "matchesXPath": {
+          "expression": "//in:surname[normalize-space(text())='Garbage']",
+          "xPathNamespaces": {
+            "in": "http://common.crm.ihg.com/schema/v1_0/complex"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "text/xml; charset=utf-8" },
+        "bodyFileName": "malformed-truncated.xml"
+      }
+    },
+    {
+      "priority": 1,
+      "name": "slow-timeout",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService",
+        "matchesXPath": {
+          "expression": "//in:surname[normalize-space(text())='Slow']",
+          "xPathNamespaces": {
+            "in": "http://common.crm.ihg.com/schema/v1_0/complex"
+          }
+        }
+      },
+      "response": {
+        "status": 200,
+        "fixedDelayMilliseconds": 15000,
+        "headers": { "Content-Type": "text/xml; charset=utf-8" },
+        "bodyFileName": "response-single.xml"
+      }
+    },
+    {
+      "priority": 1,
+      "name": "proxy-502-html",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService",
+        "matchesXPath": {
+          "expression": "//in:surname[normalize-space(text())='Proxy']",
+          "xPathNamespaces": {
+            "in": "http://common.crm.ihg.com/schema/v1_0/complex"
+          }
+        }
+      },
+      "response": {
+        "status": 502,
+        "headers": { "Content-Type": "text/html; charset=utf-8" },
+        "bodyFileName": "malformed-proxy-502.html"
+      }
+    },
+    {
+      "priority": 10,
+      "name": "default-multiple",
+      "request": {
+        "method": "POST",
+        "urlPath": "/InitiateService"
+      },
+      "response": {
+        "status": 200,
+        "headers": { "Content-Type": "text/xml; charset=utf-8" },
+        "bodyFileName": "response-multiple.xml"
+      }
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+/*
+ * Visual polish: hero band, entrance motion, skeleton shimmer and keyboard hints.
+ *
+ * Everything here is decorative and token-driven. All motion is short (<= 400ms), uses
+ * transform/opacity only, and is neutralised by the global prefers-reduced-motion reset in
+ * theme.css (Req 18.9, WCAG 2.3.3). The hero artwork is an original, self-hosted SVG under
+ * /illustrations, so it satisfies CSP img-src 'self' and Req 21.9 (no third-party assets).
+ */
+
+@theme {
+  --animate-rise-in: rise-in 360ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  --animate-fade-in: fade-in 200ms ease-out both;
+
+  @keyframes rise-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Used by the details drawer (data-[entering]:animate-[slide-in_150ms]). */
+  @keyframes slide-in {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+    to {
+      transform: none;
+      opacity: 1;
+    }
+  }
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+}
+
+@layer components {
+  /*
+   * Navy hero band behind the page heading, echoing the navy booking band on ihg.com.
+   * White text on navy-700 is ~10:1; on navy-900 higher still.
+   */
+  .hero-band {
+    background-color: var(--ihg-navy-700);
+    background-image:
+      var(--hero-pattern),
+      linear-gradient(
+        115deg,
+        var(--ihg-navy-900) 0%,
+        var(--ihg-navy-700) 55%,
+        var(--ihg-navy-600) 100%
+      );
+    background-repeat: no-repeat, no-repeat;
+    background-position:
+      right center,
+      0 0;
+    background-size:
+      cover,
+      100% 100%;
+  }
+
+  /* Skeleton placeholder with a soft travelling highlight (static under reduced motion). */
+  .skeleton {
+    background-image: linear-gradient(
+      90deg,
+      var(--surface-2) 0%,
+      var(--row-hover) 40%,
+      var(--surface) 50%,
+      var(--row-hover) 60%,
+      var(--surface-2) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+
+  /* Keyboard key hint, e.g. <kbd>/</kbd>. */
+  .kbd {
+    display: inline-flex;
+    min-width: 1.5rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: var(--radius-control);
+    background-color: var(--surface);
+    padding: 0 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    color: var(--ihg-navy-700);
+  }
+}
