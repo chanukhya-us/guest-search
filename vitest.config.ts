@@ -51,7 +51,7 @@ export default defineConfig({
           name: 'scripts',
           root: './scripts',
           environment: 'node',
-          include: ['**/*.test.mjs'],
+          include: ['**/*.test.{mjs,ts}'],
         },
       },
     ],

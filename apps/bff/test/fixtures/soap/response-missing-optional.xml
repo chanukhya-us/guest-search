@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  searchGuestResponse: three sparse guests (Req 12.8, 12.9).
+    1. enterpriseId only: every optional field and collection absent.
+    2. Non-numeric score, given name only, an address with only a country, a phone without a
+       number and an email with blank text (both skipped), a membership with only a code.
+    3. No attributes and no enterpriseId at all.
+  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header/>
+  <soap:Body>
+    <ns4:searchGuestResponse xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1" xmlns:ns2="http://crm.ihg.com/schema/v1_0/initiate" xmlns:ns3="http://common.crm.ihg.com/schema/v1_0/complex" xmlns:ns4="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1" xmlns:ns5="http://common.crm.ihg.com/schema/v1_0/basictypes">
+      <header>
+        <transactionStatus overallStatusCode="0000" overallStatusDescription="Success" transactionSuccessful="true"/>
+      </header>
+      <ns2:initiateGuest>
+        <ns2:enterpriseId>900000051</ns2:enterpriseId>
+      </ns2:initiateGuest>
+      <ns2:initiateGuest score="n/a" status="">
+        <ns2:enterpriseId>900000052</ns2:enterpriseId>
+        <ns3:name>
+          <ns5:given>Harper</ns5:given>
+          <ns5:surname>  </ns5:surname>
+        </ns3:name>
+        <ns3:address>
+          <ns3:source>
+            <ns5:country>US</ns5:country>
+          </ns3:source>
+        </ns3:address>
+        <ns3:phone type="MOBILE" location="H"/>
+        <ns3:email profileDefault="true">
+          <ns5:address> </ns5:address>
+        </ns3:email>
+        <ns3:membership code="PLACEHOLDER"/>
+      </ns2:initiateGuest>
+      <ns2:initiateGuest/>
+    </ns4:searchGuestResponse>
+  </soap:Body>
+</soap:Envelope>

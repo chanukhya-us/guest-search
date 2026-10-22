@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  searchGuestResponse: one guest with two addresses, phones and emails and NO item flagged
+  profileDefault="true" (flags are "false" or absent). The primary falls back to the first
+  item of each kind (Req 12.6).
+  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header/>
+  <soap:Body>
+    <ns4:searchGuestResponse xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1" xmlns:ns2="http://crm.ihg.com/schema/v1_0/initiate" xmlns:ns3="http://common.crm.ihg.com/schema/v1_0/complex" xmlns:ns4="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1" xmlns:ns5="http://common.crm.ihg.com/schema/v1_0/basictypes">
+      <header>
+        <transactionStatus overallStatusCode="0000" overallStatusDescription="Success" transactionSuccessful="true"/>
+      </header>
+      <ns2:initiateGuest score="80" status="A">
+        <ns2:enterpriseId>900000031</ns2:enterpriseId>
+        <ns3:name>
+          <ns5:given>Finley</ns5:given>
+          <ns5:surname>Nodefault</ns5:surname>
+        </ns3:name>
+        <ns3:address locationCode="H" profileDefault="false">
+          <ns3:source>
+            <ns5:line1>131 Example Way</ns5:line1>
+            <ns5:locality1>Atlanta</ns5:locality1>
+            <ns5:region1>GA</ns5:region1>
+            <ns5:postalCode>30399</ns5:postalCode>
+            <ns5:country>US</ns5:country>
+          </ns3:source>
+        </ns3:address>
+        <ns3:address locationCode="B">
+          <ns3:source>
+            <ns5:line1>132 Example Way</ns5:line1>
+            <ns5:locality1>Macon</ns5:locality1>
+            <ns5:region1>GA</ns5:region1>
+            <ns5:country>US</ns5:country>
+          </ns3:source>
+        </ns3:address>
+        <ns3:phone number="+1 404 555 0131" type="MOBILE" location="H" profileDefault="false"/>
+        <ns3:phone number="+1 404 555 0132" type="WORK" location="B"/>
+        <ns3:email profileDefault="false">
+          <ns5:address>finley.nodefault@example.test</ns5:address>
+        </ns3:email>
+        <ns3:email>
+          <ns5:address>finley.second@example.test</ns5:address>
+        </ns3:email>
+      </ns2:initiateGuest>
+    </ns4:searchGuestResponse>
+  </soap:Body>
+</soap:Envelope>

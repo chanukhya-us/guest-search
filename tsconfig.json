@@ -4,7 +4,9 @@
     "noEmit": true,
     "allowJs": true,
     "checkJs": true,
-    "types": ["node"]
+    "types": ["node"],
+    // scripts/*.ts run under Node type stripping, which only supports erasable syntax.
+    "erasableSyntaxOnly": true
   },
-  "include": ["vitest.config.ts", "eslint.config.js"]
+  "include": ["vitest.config.ts", "eslint.config.js", "scripts/**/*.ts"]
 }

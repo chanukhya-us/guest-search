@@ -23,6 +23,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "npm run test:e2e --workspaces --if-present",
     "check:deps": "node scripts/check-deps.mjs",
+    "gen:fixtures": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/gen-fixtures.ts",
     "dev": "npm run dev --workspaces --if-present"
   },
   "devDependencies": {

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  searchGuestResponse with an unsuccessful transactionStatus (HTTP 200, no Fault).
+  WireMock scenario "Broken". Expected: UPSTREAM_TXN_FAILED with detail "1001" (Req 11.8, 11.9).
+  The status code value is synthetic; the real code set is unknown until Blocker B2.
+  A guest is present on purpose: it must NOT be returned when the status is a failure.
+  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header/>
+  <soap:Body>
+    <ns4:searchGuestResponse xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1" xmlns:ns2="http://crm.ihg.com/schema/v1_0/initiate" xmlns:ns3="http://common.crm.ihg.com/schema/v1_0/complex" xmlns:ns4="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1" xmlns:ns5="http://common.crm.ihg.com/schema/v1_0/basictypes">
+      <header>
+        <transactionStatus overallStatusCode="1001" overallStatusDescription="Synthetic failure for tests" transactionSuccessful="false"/>
+      </header>
+      <ns2:initiateGuest score="50" status="A">
+        <ns2:enterpriseId>900000061</ns2:enterpriseId>
+      </ns2:initiateGuest>
+    </ns4:searchGuestResponse>
+  </soap:Body>
+</soap:Envelope>

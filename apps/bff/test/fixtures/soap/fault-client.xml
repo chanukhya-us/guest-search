@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SOAP 1.1 client Fault (typically HTTP 500). WireMock scenario "Fault".
+  Expected: UPSTREAM_FAULT with detail "soap:Client". The faultstring and detail text must
+  never reach the UI or logs (Req 11.7); they contain a synthetic PII marker to prove it.
+  Synthetic data only.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <soap:Fault>
+      <faultcode>soap:Client</faultcode>
+      <faultstring>Synthetic client fault: invalid criteria for faultmarker@example.test</faultstring>
+      <detail>
+        <reason xmlns="urn:example:fault-detail">Synthetic validation detail for +1 404 555 0190</reason>
+      </detail>
+    </soap:Fault>
+  </soap:Body>
+</soap:Envelope>

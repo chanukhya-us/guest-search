@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  searchGuestResponse: one guest carrying Prohibited_Data. The creditCard element (shape
+  invented for the test; it is not in contract.ts) holds a unique synthetic token marker as
+  element text AND as an attribute. The guest's PII values are unique markers too.
+  Neither the token, nor "creditCard", nor the PII may appear in the normalized output or in
+  any log line (Req 12.10, 12.11, 12.13, 25.6). The marker values are exported from
+  test/helpers/responseFixtures.ts. Synthetic data only; this is NOT a card number.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header/>
+  <soap:Body>
+    <ns4:searchGuestResponse xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1" xmlns:ns2="http://crm.ihg.com/schema/v1_0/initiate" xmlns:ns3="http://common.crm.ihg.com/schema/v1_0/complex" xmlns:ns4="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1" xmlns:ns5="http://common.crm.ihg.com/schema/v1_0/basictypes">
+      <header>
+        <transactionStatus overallStatusCode="0000" overallStatusDescription="Success" transactionSuccessful="true"/>
+      </header>
+      <ns2:initiateGuest score="96" status="A" gender="F">
+        <ns2:enterpriseId>900000077</ns2:enterpriseId>
+        <ns3:name>
+          <ns5:given>Leakcheck</ns5:given>
+          <ns5:surname>Markerguest</ns5:surname>
+        </ns3:name>
+        <ns3:address locationCode="H" profileDefault="true">
+          <ns3:source>
+            <ns5:line1>177 Leakmarker Way</ns5:line1>
+            <ns5:locality1>Atlanta</ns5:locality1>
+            <ns5:region1>GA</ns5:region1>
+            <ns5:postalCode>30399</ns5:postalCode>
+            <ns5:country>US</ns5:country>
+          </ns3:source>
+        </ns3:address>
+        <ns3:phone number="+1 404 555 0177" type="MOBILE" location="H" profileDefault="true"/>
+        <ns3:email profileDefault="true">
+          <ns5:address>leakcheck.markerguest@example.test</ns5:address>
+        </ns3:email>
+        <ns3:membership code="PLACEHOLDER" value="900000078" status="ACTIVE"/>
+        <ns3:creditCard token="SYNTH-CC-TOKEN-Q7X4K9M2P5W8" type="SYNTH">
+          <ns5:token>SYNTH-CC-TOKEN-Q7X4K9M2P5W8</ns5:token>
+          <ns5:expiry>2099-12</ns5:expiry>
+        </ns3:creditCard>
+      </ns2:initiateGuest>
+    </ns4:searchGuestResponse>
+  </soap:Body>
+</soap:Envelope>

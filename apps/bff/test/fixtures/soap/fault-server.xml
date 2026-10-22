@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SOAP 1.1 server Fault (HTTP 500). Expected: UPSTREAM_FAULT with detail "soap:Server".
+  The faultstring imitates a stack trace that must never reach the UI or logs (Req 11.7).
+  Synthetic data only.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header/>
+  <soap:Body>
+    <soap:Fault>
+      <faultcode>soap:Server</faultcode>
+      <faultstring>Synthetic internal error at example.Service.search(Service.java:42)</faultstring>
+      <faultactor>urn:example:guest-service</faultactor>
+    </soap:Fault>
+  </soap:Body>
+</soap:Envelope>

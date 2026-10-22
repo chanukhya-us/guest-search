@@ -11,4 +11,6 @@ schemas/
 samples/
 # Canonical XML fixtures and snapshots: byte-exact, compared after canonicalization.
 **/test/fixtures/**/*.xml
+# Upstream error bodies (for example the 502 proxy page) are served byte-for-byte too.
+**/test/fixtures/**/*.html
 **/__snapshots__/**/*.xml

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  searchGuestResponse: three guests. WireMock default scenario (lowest priority).
+  response-odd-prefixes.xml and response-default-namespace.xml carry the SAME data with other
+  prefixes, so they must parse to the same result (prefix invariance, Req 11.4, 11.12).
+  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header/>
+  <soap:Body>
+    <ns4:searchGuestResponse xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1" xmlns:ns2="http://crm.ihg.com/schema/v1_0/initiate" xmlns:ns3="http://common.crm.ihg.com/schema/v1_0/complex" xmlns:ns4="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1" xmlns:ns5="http://common.crm.ihg.com/schema/v1_0/basictypes">
+      <header>
+        <transactionStatus overallStatusCode="0000" overallStatusDescription="Success" transactionSuccessful="true"/>
+      </header>
+      <ns2:initiateGuest score="99.0" status="A" gender="F">
+        <ns2:enterpriseId>900000002</ns2:enterpriseId>
+        <ns3:name>
+          <ns5:given>Blake</ns5:given>
+          <ns5:surname>Testguest</ns5:surname>
+        </ns3:name>
+        <ns3:address locationCode="H" profileDefault="true">
+          <ns3:source>
+            <ns5:line1>102 Example Way</ns5:line1>
+            <ns5:locality1>Atlanta</ns5:locality1>
+            <ns5:region1>GA</ns5:region1>
+            <ns5:postalCode>30399</ns5:postalCode>
+            <ns5:country>US</ns5:country>
+          </ns3:source>
+        </ns3:address>
+        <ns3:phone number="+1 404 555 0102" type="MOBILE" location="H" profileDefault="true"/>
+        <ns3:email profileDefault="true">
+          <ns5:address>blake.testguest@example.test</ns5:address>
+        </ns3:email>
+        <ns3:membership code="PLACEHOLDER" value="900000012" status="ACTIVE"/>
+      </ns2:initiateGuest>
+      <ns2:initiateGuest score="87.25" status="A" gender="M">
+        <ns2:enterpriseId>900000003</ns2:enterpriseId>
+        <ns3:name>
+          <ns5:given>Casey</ns5:given>
+          <ns5:surname>Testguest</ns5:surname>
+        </ns3:name>
+        <ns3:address locationCode="B" profileDefault="true">
+          <ns3:source>
+            <ns5:line1>103 Example Way</ns5:line1>
+            <ns5:locality1>Toronto</ns5:locality1>
+            <ns5:region1>ON</ns5:region1>
+            <ns5:postalCode>M5V 0Z0</ns5:postalCode>
+            <ns5:country>CA</ns5:country>
+          </ns3:source>
+        </ns3:address>
+        <ns3:phone number="+1 404 555 0103" type="WORK" location="B" profileDefault="true"/>
+        <ns3:email profileDefault="true">
+          <ns5:address>casey.testguest@example.test</ns5:address>
+        </ns3:email>
+      </ns2:initiateGuest>
+      <ns2:initiateGuest score="64" status="I">
+        <ns2:enterpriseId>900000004</ns2:enterpriseId>
+        <ns3:name>
+          <ns5:given>Devon</ns5:given>
+          <ns5:surname>Testguest</ns5:surname>
+        </ns3:name>
+        <ns3:email profileDefault="true">
+          <ns5:address>devon.testguest@example.test</ns5:address>
+        </ns3:email>
+        <ns3:membership code="PLACEHOLDER" value="900000014" status="INACTIVE"/>
+      </ns2:initiateGuest>
+    </ns4:searchGuestResponse>
+  </soap:Body>
+</soap:Envelope>

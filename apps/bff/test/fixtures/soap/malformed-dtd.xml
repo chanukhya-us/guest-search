@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE soap:Envelope [
+  <!ENTITY xxe SYSTEM "file:///etc/passwd">
+  <!ENTITY lol "lol">
+  <!ENTITY lol2 "&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;">
+  <!ENTITY lol3 "&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;">
+]>
+<!--
+  searchGuestResponse with an internal DTD: an external entity (XXE) and a small entity
+  expansion chain. Expected: UPSTREAM_MALFORMED before parsing; no entity is ever resolved
+  or expanded (Req 11.1). Otherwise a valid one-guest response. Synthetic data only.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Header/>
+  <soap:Body>
+    <ns4:searchGuestResponse xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1" xmlns:ns2="http://crm.ihg.com/schema/v1_0/initiate" xmlns:ns3="http://common.crm.ihg.com/schema/v1_0/complex" xmlns:ns4="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1" xmlns:ns5="http://common.crm.ihg.com/schema/v1_0/basictypes">
+      <header>
+        <transactionStatus overallStatusCode="0000" overallStatusDescription="Success" transactionSuccessful="true"/>
+      </header>
+      <ns2:initiateGuest score="90" status="A">
+        <ns2:enterpriseId>900000091</ns2:enterpriseId>
+        <ns3:name>
+          <ns5:given>&lol3;</ns5:given>
+          <ns5:surname>&xxe;</ns5:surname>
+        </ns3:name>
+      </ns2:initiateGuest>
+    </ns4:searchGuestResponse>
+  </soap:Body>
+</soap:Envelope>

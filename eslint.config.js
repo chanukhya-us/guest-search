@@ -37,7 +37,7 @@ export default tseslint.config(
   },
   {
     // Node CLI scripts run outside the TS build; declare the Node globals they use.
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.{mjs,ts}'],
     languageOptions: {
       globals: { process: 'readonly', console: 'readonly' },
     },
