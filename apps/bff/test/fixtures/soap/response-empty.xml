@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   searchGuestResponse: successful transaction with zero guests. WireMock scenario "Nobody".
-  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+  Synthetic data only. Provisional placement mirroring the request sample (docs/Request.txt) until a response sample or XSD.
 -->
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header/>

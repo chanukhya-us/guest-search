@@ -3,8 +3,9 @@
 //
 // P3 feeds fully arbitrary strings, XML-ish token soup, mutated fixtures and deep nesting.
 // P4 re-serializes the valid fixtures from the DOM with random prefixes (test/helpers/
-// prefixRewrite.ts), never with regex over the XML. U+FFFD is never introduced in P4: xmldom
-// warns on it and the parser treats every warning as MALFORMED, which is correct for P3.
+// prefixRewrite.ts), never with regex over the XML. U+FFFD (in the P3 soup) is tolerated by
+// the parser: xmldom only warns on it, and that single warning is not fatal. P3's oracle is
+// unchanged by this (a result array or a typed SoapError either way).
 import { fc, test } from '@fast-check/vitest';
 import type { GuestSearchResult } from '@ihg-guest-search/shared';
 import { describe, expect, it } from 'vitest';
@@ -145,8 +146,8 @@ const SOUP_TOKENS = [
   `<g:initiateGuest xmlns:g="${NS.initiate}" score="1e999">`,
   '</g:initiateGuest>',
   `<g:enterpriseId xmlns:g="${NS.initiate}">900000001</g:enterpriseId>`,
-  `<x:phone xmlns:x="${NS.complex}" number="+1 404 555 0101"/>`,
-  `<x:name xmlns:x="${NS.complex}">`,
+  `<x:phone xmlns:x="${NS.initiate}" number="+1 404 555 0101"/>`,
+  `<x:name xmlns:x="${NS.initiate}">`,
   '</x:name>',
   'a:b',
   ':',
@@ -218,7 +219,7 @@ const mutatedFixture = fc
   .map(([f, ms]) => ms.reduce(applyMutation, xmlOf(f)));
 
 type Nesting = 'bare' | 'unclosed' | 'body' | 'given';
-const GIVEN = 'Avery</ns5:given>';
+const GIVEN = 'Avery</ns3:given>';
 
 function nested(kind: Nesting, depth: number): string {
   const open = '<a>'.repeat(depth);
@@ -232,7 +233,7 @@ function nested(kind: Nesting, depth: number): string {
       return `<soap:Envelope xmlns:soap="${NS.soap}"><soap:Body>${open}${close}</soap:Body></soap:Envelope>`;
     case 'given':
       // Deep content inside a mapped text element, so textContent walks the whole chain.
-      return xmlOf('response-single.xml').replace(GIVEN, open + 'Avery' + close + '</ns5:given>');
+      return xmlOf('response-single.xml').replace(GIVEN, open + 'Avery' + close + '</ns3:given>');
   }
 }
 
@@ -327,6 +328,9 @@ describe('parseSearchGuestResponse prefix invariance', () => {
       expect(namespaceSignature(rewritten)).toStrictEqual(namespaceSignature(original));
       expect(parseSearchGuestResponse(rewritten)).toStrictEqual(canonical(file));
     },
+    // 300 runs that include the 60-guest fixture take ~5 s under coverage on a loaded worker,
+    // right at Vitest's default timeout; give the property explicit headroom.
+    30_000,
   );
 
   // Examples pinning down that the rewriter really exercises the cases P4 is about.
@@ -341,21 +345,22 @@ describe('parseSearchGuestResponse prefix invariance', () => {
   });
 
   it('the rewriter redeclares a namespace mid-tree, including as the default', () => {
-    // URIs in document order: soap, svc, common, initiate, complex, basic.
-    const base = { prefixes: ['s', 'v', 'c', 'i', 'x', 'b'], rebind: [] };
+    // URIs in document order: soap, svc, common, initiate, complex (the response fixtures use
+    // no basictypes element since they mirror the request sample).
+    const base = { prefixes: ['s', 'v', 'c', 'i', 'x'], rebind: [] };
     const plain = rewritePrefixes(xmlOf('response-repeated-contacts.xml'), base);
     const rebound = rewritePrefixes(xmlOf('response-repeated-contacts.xml'), {
       ...base,
-      // Element 0 is Envelope: the complex namespace (index 4) becomes the default there, and
-      // element 9 (the first `given`) rebinds 's' from SOAP to the basic namespace (index 5).
+      // Element 0 is Envelope: the initiate namespace (index 3) becomes the default there, and
+      // element 9 (the first `given`) rebinds 's' from SOAP to the complex namespace (index 4).
       rebind: [
-        { at: 0, ns: 4, prefix: '' },
-        { at: 9, ns: 5, prefix: 's' },
+        { at: 0, ns: 3, prefix: '' },
+        { at: 9, ns: 4, prefix: 's' },
       ],
     });
     expect(rebound).not.toBe(plain);
-    expect(rebound).toContain(`xmlns="${NS.complex}"`);
-    expect(rebound).toContain(`xmlns:s="${NS.basic}"`);
+    expect(rebound).toContain(`xmlns="${NS.initiate}"`);
+    expect(rebound).toContain(`xmlns:s="${NS.complex}"`);
     expect(parseSearchGuestResponse(rebound)).toStrictEqual(
       canonical('response-repeated-contacts.xml'),
     );

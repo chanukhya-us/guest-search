@@ -15,8 +15,7 @@ const SECRET = 'test-session-secret-0123456789abcdef';
 
 /** Required keys only; everything else falls back to its default. */
 const REQUIRED: Record<string, string> = {
-  SOAP_ENDPOINT: 'http://localhost:8080/GuestSearchService',
-  SOAP_ACTION: 'test-action',
+  SOAP_ENDPOINT: 'http://localhost:8080/InitiateService',
   SOAP_HEADER_LANGUAGE_CODE: 'en',
   SOAP_HEADER_COUNTRY_CODE: 'US',
   SOAP_HEADER_CHANNEL: 'test-channel',
@@ -61,8 +60,9 @@ describe('loadConfig defaults', () => {
     expect(c.auth).toEqual({
       mode: 'dev',
       dev: {
-        userId: 'dev-user-001',
-        displayName: 'Dev Colleague',
+        persona: 'jane.doe',
+        userId: 'dev-jane.doe',
+        displayName: 'Jane Doe (Customer Care)',
         roles: ['GuestSearch.Read', 'GuestSearch.RevealPII'],
       },
     });
@@ -75,7 +75,9 @@ describe('loadConfig defaults', () => {
     expect(c.soap.endpoint).toBeInstanceOf(URL);
     expect(c.soap.endpoint.href).toBe(REQUIRED.SOAP_ENDPOINT);
     expect(c.soap).toMatchObject({
-      soapAction: 'test-action',
+      // Sample defaults (docs/Request.txt): SOAPAction is unquoted.
+      soapAction: 'searchGuest',
+      channelId: 'WEBWB',
       connectTimeoutMs: 3000,
       responseTimeoutMs: 10000,
       maxResponseBytes: 2 * 1024 * 1024,
@@ -85,7 +87,7 @@ describe('loadConfig defaults', () => {
         languageCode: 'en',
         countryCode: 'US',
         channel: 'test-channel',
-        subChannel: 'test-subchannel',
+        subChannels: ['test-subchannel'],
         environment: 'test',
         serviceUser: 'test-service-user',
         sequence: 1,
@@ -113,6 +115,16 @@ describe('loadConfig defaults', () => {
     );
   });
 
+  it.each([
+    ['read.only', 'dev-read.only', 'Riley Reader (Read only)', ['GuestSearch.Read']],
+    ['no.access', 'dev-no.access', 'Nora NoAccess', []],
+  ])('selects the %s dev persona via DEV_AUTH_PERSONA', (persona, userId, displayName, roles) => {
+    expect(load({ ...REQUIRED, DEV_AUTH_PERSONA: persona }).auth).toEqual({
+      mode: 'dev',
+      dev: { persona, userId, displayName, roles },
+    });
+  });
+
   it('parses overrides, optional TLS paths, oidc mode and member types', () => {
     const c = load({
       ...REQUIRED,
@@ -123,6 +135,9 @@ describe('loadConfig defaults', () => {
       SOAP_TLS_CA_FILE: 'certs/ca.pem',
       SOAP_SERVICE_CREDENTIAL: 'test-credential',
       SOAP_HEADER_SEQUENCE: '3',
+      SOAP_HEADER_SUB_CHANNEL: ' ATLR3 , profile ,',
+      SOAP_ACTION: 'urn:other-action',
+      SOAP_CHANNEL_ID: 'OTHER',
       UI_MEMBER_TYPES: '[{"code":"A","label":"Alpha"},{"code":"B","label":"Beta"}]',
       TELEMETRY_EXPORTER: 'otlp',
       OTEL_EXPORTER_OTLP_ENDPOINT: 'http://localhost:4318',
@@ -133,6 +148,10 @@ describe('loadConfig defaults', () => {
     expect(c.soap.tls).toEqual({ caFile: 'certs/ca.pem' });
     expect(c.soap.header.credential).toBe('test-credential');
     expect(c.soap.header.sequence).toBe(3);
+    // Ordered list, trimmed, empty items dropped; SOAPAction kept verbatim (no quoting).
+    expect(c.soap.header.subChannels).toEqual(['ATLR3', 'profile']);
+    expect(c.soap.soapAction).toBe('urn:other-action');
+    expect(c.soap.channelId).toBe('OTHER');
     expect(c.ui.memberTypes).toEqual([
       { code: 'A', label: 'Alpha' },
       { code: 'B', label: 'Beta' },
@@ -192,8 +211,11 @@ describe('loadConfig failures', () => {
     ['SOAP_ENDPOINT', 'ftp://example.test/soap'],
     ['SOAP_ENDPOINT', 'not a url'],
     ['SOAP_ACTION', 'action\r\nInjected: 1'],
+    ['SOAP_CHANNEL_ID', 'WEBWB\r\nInjected: 1'],
+    ['SOAP_HEADER_SUB_CHANNEL', ' , '],
     ['SESSION_COOKIE_NAME', 'bad name;'],
-    ['DEV_AUTH_ROLES', ' , '],
+    ['DEV_AUTH_PERSONA', 'admin'],
+    ['DEV_AUTH_PERSONA', 'Jane.Doe'],
     ['UI_MEMBER_TYPES', '{not json'],
     ['UI_MEMBER_TYPES', '{"code":"A","label":"Alpha"}'],
     ['UI_MEMBER_TYPES', '[{"code":"A"}]'],
@@ -216,10 +238,10 @@ describe('loadConfig failures', () => {
 
   it('reports missing and invalid keys together', () => {
     const rest = { ...REQUIRED };
-    delete rest.SOAP_ACTION;
+    delete rest.SOAP_HEADER_ENVIRONMENT;
     const err = startupError(() => load({ ...rest, SOAP_RESPONSE_TIMEOUT_MS: '-1' }));
     expect(err.message).toBe(
-      'Invalid configuration (missing: SOAP_ACTION; invalid: SOAP_RESPONSE_TIMEOUT_MS)',
+      'Invalid configuration (missing: SOAP_HEADER_ENVIRONMENT; invalid: SOAP_RESPONSE_TIMEOUT_MS)',
     );
   });
 });

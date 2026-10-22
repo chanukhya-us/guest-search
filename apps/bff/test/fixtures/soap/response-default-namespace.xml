@@ -3,7 +3,8 @@
   searchGuestResponse: the same three guests as response-multiple.xml, with NO prefixes at
   all. Every element is in a default namespace that is redeclared as the document descends.
   Must parse to the same result as response-multiple.xml (Req 11.4, 11.12).
-  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+  Synthetic data only. Provisional placement mirroring the request sample (docs/Request.txt)
+  until a response sample or XSD.
 -->
 <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
   <Header/>
@@ -14,55 +15,55 @@
       </header>
       <initiateGuest xmlns="http://crm.ihg.com/schema/v1_0/initiate" score="99.0" status="A" gender="F">
         <enterpriseId>900000002</enterpriseId>
-        <name xmlns="http://common.crm.ihg.com/schema/v1_0/complex">
-          <given xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">Blake</given>
-          <surname xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">Testguest</surname>
+        <name>
+          <given xmlns="http://common.crm.ihg.com/schema/v1_0/complex">Blake</given>
+          <surname xmlns="http://common.crm.ihg.com/schema/v1_0/complex">Testguest</surname>
         </name>
-        <address xmlns="http://common.crm.ihg.com/schema/v1_0/complex" locationCode="H" profileDefault="true">
-          <source>
-            <line1 xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">102 Example Way</line1>
-            <locality1 xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">Atlanta</locality1>
-            <region1 xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">GA</region1>
-            <postalCode xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">30399</postalCode>
-            <country xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">US</country>
+        <address locationCode="H" profileDefault="true">
+          <source xmlns="http://common.crm.ihg.com/schema/v1_0/complex">
+            <line1>102 Example Way</line1>
+            <locality1>Atlanta</locality1>
+            <region1>GA</region1>
+            <postalCode>30399</postalCode>
+            <country>US</country>
           </source>
         </address>
-        <phone xmlns="http://common.crm.ihg.com/schema/v1_0/complex" number="+1 404 555 0102" type="MOBILE" location="H" profileDefault="true"/>
-        <email xmlns="http://common.crm.ihg.com/schema/v1_0/complex" profileDefault="true">
-          <address xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">blake.testguest@example.test</address>
+        <phone number="+1 404 555 0102" type="MOBILE" location="H" profileDefault="true"/>
+        <email profileDefault="true">
+          <address>blake.testguest@example.test</address>
         </email>
-        <membership xmlns="http://common.crm.ihg.com/schema/v1_0/complex" code="PLACEHOLDER" value="900000012" status="ACTIVE"/>
+        <membership code="PLACEHOLDER" value="900000012" status="ACTIVE"/>
       </initiateGuest>
       <initiateGuest xmlns="http://crm.ihg.com/schema/v1_0/initiate" score="87.25" status="A" gender="M">
         <enterpriseId>900000003</enterpriseId>
-        <name xmlns="http://common.crm.ihg.com/schema/v1_0/complex">
-          <given xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">Casey</given>
-          <surname xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">Testguest</surname>
+        <name>
+          <given xmlns="http://common.crm.ihg.com/schema/v1_0/complex">Casey</given>
+          <surname xmlns="http://common.crm.ihg.com/schema/v1_0/complex">Testguest</surname>
         </name>
-        <address xmlns="http://common.crm.ihg.com/schema/v1_0/complex" locationCode="B" profileDefault="true">
-          <source>
-            <line1 xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">103 Example Way</line1>
-            <locality1 xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">Toronto</locality1>
-            <region1 xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">ON</region1>
-            <postalCode xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">M5V 0Z0</postalCode>
-            <country xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">CA</country>
+        <address locationCode="B" profileDefault="true">
+          <source xmlns="http://common.crm.ihg.com/schema/v1_0/complex">
+            <line1>103 Example Way</line1>
+            <locality1>Toronto</locality1>
+            <region1>ON</region1>
+            <postalCode>M5V 0Z0</postalCode>
+            <country>CA</country>
           </source>
         </address>
-        <phone xmlns="http://common.crm.ihg.com/schema/v1_0/complex" number="+1 404 555 0103" type="WORK" location="B" profileDefault="true"/>
-        <email xmlns="http://common.crm.ihg.com/schema/v1_0/complex" profileDefault="true">
-          <address xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">casey.testguest@example.test</address>
+        <phone number="+1 404 555 0103" type="WORK" location="B" profileDefault="true"/>
+        <email profileDefault="true">
+          <address>casey.testguest@example.test</address>
         </email>
       </initiateGuest>
       <initiateGuest xmlns="http://crm.ihg.com/schema/v1_0/initiate" score="64" status="I">
         <enterpriseId>900000004</enterpriseId>
-        <name xmlns="http://common.crm.ihg.com/schema/v1_0/complex">
-          <given xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">Devon</given>
-          <surname xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">Testguest</surname>
+        <name>
+          <given xmlns="http://common.crm.ihg.com/schema/v1_0/complex">Devon</given>
+          <surname xmlns="http://common.crm.ihg.com/schema/v1_0/complex">Testguest</surname>
         </name>
-        <email xmlns="http://common.crm.ihg.com/schema/v1_0/complex" profileDefault="true">
-          <address xmlns="http://common.crm.ihg.com/schema/v1_0/basictypes">devon.testguest@example.test</address>
+        <email profileDefault="true">
+          <address>devon.testguest@example.test</address>
         </email>
-        <membership xmlns="http://common.crm.ihg.com/schema/v1_0/complex" code="PLACEHOLDER" value="900000014" status="INACTIVE"/>
+        <membership code="PLACEHOLDER" value="900000014" status="INACTIVE"/>
       </initiateGuest>
     </searchGuestResponse>
   </Body>

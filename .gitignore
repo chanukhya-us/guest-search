@@ -20,6 +20,9 @@ logs/
 .env.*
 !.env.example
 
+# Raw team SOAP sample (contains a personal user ID and internal identifiers; local only)
+docs/Request.txt
+
 # OS / editor
 .DS_Store
 Thumbs.db

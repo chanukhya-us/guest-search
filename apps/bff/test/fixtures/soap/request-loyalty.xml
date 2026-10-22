@@ -2,27 +2,28 @@
   Expected searchGuestRequest envelope: Loyalty Member ID and Member Type.
   Synthetic data only. Generated with the real request mapper (fixed clock and request ID,
   see test/helpers/requestFixtures.ts), then canonicalized and formatted by
-  test/helpers/c14n.ts. Provisional element placement until Blocker B1 (XSD).
+  test/helpers/c14n.ts. Layout from the team sample (docs/Request.txt).
   Comments are dropped by canonicalization.
 -->
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-  <soap:Header>
-    <header xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1">
-      <transactionId>00000000-0000-4000-8000-000000000001</transactionId>
-      <sequence>1</sequence>
-      <timestamp>2026-10-21T12:00:00.000Z</timestamp>
-      <languageCode>en</languageCode>
-      <countryCode>US</countryCode>
-      <channel>TEST-CHANNEL</channel>
-      <subChannel>TEST-SUBCHANNEL</subChannel>
-      <environment>local</environment>
-      <serviceUser>svc-test-user</serviceUser>
-    </header>
-  </soap:Header>
   <soap:Body>
     <ns4:searchGuestRequest xmlns:ns4="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1">
+      <header xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1">
+        <language isoCountryCode="US" isoLanguageCode="en"></language>
+        <channel name="TEST-CHANNEL">
+          <subChannel name="TEST-SUBCHANNEL">
+            <subChannel name="TEST-PROFILE"></subChannel>
+          </subChannel>
+        </channel>
+        <headerVersion major="1" minor="0"></headerVersion>
+        <environment name="local"></environment>
+        <user id="svc-test-user"></user>
+        <transactionId id="00000000-0000-4000-8000-000000000001"></transactionId>
+        <transactionSequence number="1"></transactionSequence>
+        <sendTimeStamp>2026-10-21T12:00:00.000Z</sendTimeStamp>
+      </header>
       <ns4:searchCriteria status="O">
-        <ns3:membership xmlns:ns3="http://common.crm.ihg.com/schema/v1_0/complex" code="PLACEHOLDER" value="900000011"></ns3:membership>
+        <ns2:membership xmlns:ns2="http://crm.ihg.com/schema/v1_0/initiate" code="PLACEHOLDER" value="900000011"></ns2:membership>
       </ns4:searchCriteria>
       <ns4:allAttributes>true</ns4:allAttributes>
       <ns4:allHistory>false</ns4:allHistory>

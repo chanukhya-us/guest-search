@@ -25,13 +25,13 @@ import {
 } from '../../src/soap/requestMapper.js';
 import { REFERENCE_HEADER, REFERENCE_OPTIONS } from '../helpers/requestFixtures.js';
 import {
+  attr,
   childElements,
   descendants,
   find,
   findAll,
   parseXml,
   readMappedRequest,
-  text,
   type MappedRequest,
 } from '../helpers/xmlRead.js';
 
@@ -217,7 +217,7 @@ const headerText = fc.oneof(
 const header: fc.Arbitrary<HeaderContext> = fc
   .record({
     channel: headerText,
-    subChannel: headerText,
+    subChannels: fc.array(headerText, { maxLength: 3 }),
     environment: headerText,
     serviceUser: headerText,
   })
@@ -282,15 +282,19 @@ describe('buildSearchGuestRequest', () => {
   // **Validates: Requirements 9.15, 25.4**
   test.prop([validQuery, header], { numRuns: 100 })('P1: header text round-trips', (q, h) => {
     const doc = parseXml(buildSearchGuestRequest(q, h, REFERENCE_OPTIONS));
-    const one = (e: El): string | undefined => {
+    // Header values are attributes (docs/Request.txt), so they are read back with `attr`.
+    const one = (e: El, name: string): string | undefined => {
       const found = descendants(doc, e);
       expect(found).toHaveLength(1);
-      return text(found[0]);
+      return attr(found[0], name);
     };
-    expect(one(EL.headerChannel)).toBe(h.channel);
-    expect(one(EL.headerSubChannel)).toBe(h.subChannel);
-    expect(one(EL.headerEnvironment)).toBe(h.environment);
-    expect(one(EL.headerServiceUser)).toBe(h.serviceUser);
+    expect(one(EL.headerChannel, 'name')).toBe(h.channel);
+    // Nested subchannels appear in document order, outermost first.
+    expect(descendants(doc, EL.headerSubChannel).map((e) => attr(e, 'name'))).toEqual(
+      h.subChannels,
+    );
+    expect(one(EL.headerEnvironment, 'name')).toBe(h.environment);
+    expect(one(EL.headerUser, 'id')).toBe(h.serviceUser);
   });
 
   // Feature: ihg-guest-search, Property 2: Blank omission — For all queries where a group's
@@ -303,11 +307,18 @@ describe('buildSearchGuestRequest', () => {
       const criteria = criteriaOf(xml);
       const doc = parseXml(xml);
 
+      const isSupplied = (key: GroupKey): boolean =>
+        GROUP_FIELDS[key].fields.some((f) => expected(q, f, o.features) !== undefined);
       for (const key of ORDER.searchCriteria) {
-        const { el, fields } = GROUP_FIELDS[key];
-        const supplied = fields.some((f) => expected(q, f, o.features) !== undefined);
-        // Searched anywhere in the document, so a misplaced group would also be caught.
-        expect(descendants(doc, el).length, key).toBe(supplied ? 1 : 0);
+        const supplied = isSupplied(key);
+        // Searched anywhere in the document, so a misplaced group would also be caught. The
+        // email child `address` has the same identity as the address group (initiate:address,
+        // as in the sample), so it is counted too when email is supplied.
+        const sameIdentity = key === 'address' && isSupplied('email') ? 1 : 0;
+        expect(descendants(doc, GROUP_FIELDS[key].el).length, key).toBe(
+          (supplied ? 1 : 0) + sameIdentity,
+        );
+        expect(findAll(criteria, [GROUP_FIELDS[key].el]).length, key).toBe(supplied ? 1 : 0);
       }
 
       // No element for an absent field: name and address/source carry exactly the supplied

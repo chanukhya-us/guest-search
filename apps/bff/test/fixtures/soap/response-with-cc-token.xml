@@ -16,28 +16,28 @@
       </header>
       <ns2:initiateGuest score="96" status="A" gender="F">
         <ns2:enterpriseId>900000077</ns2:enterpriseId>
-        <ns3:name>
-          <ns5:given>Leakcheck</ns5:given>
-          <ns5:surname>Markerguest</ns5:surname>
-        </ns3:name>
-        <ns3:address locationCode="H" profileDefault="true">
+        <ns2:name>
+          <ns3:given>Leakcheck</ns3:given>
+          <ns3:surname>Markerguest</ns3:surname>
+        </ns2:name>
+        <ns2:address locationCode="H" profileDefault="true">
           <ns3:source>
-            <ns5:line1>177 Leakmarker Way</ns5:line1>
-            <ns5:locality1>Atlanta</ns5:locality1>
-            <ns5:region1>GA</ns5:region1>
-            <ns5:postalCode>30399</ns5:postalCode>
-            <ns5:country>US</ns5:country>
+            <ns3:line1>177 Leakmarker Way</ns3:line1>
+            <ns3:locality1>Atlanta</ns3:locality1>
+            <ns3:region1>GA</ns3:region1>
+            <ns3:postalCode>30399</ns3:postalCode>
+            <ns3:country>US</ns3:country>
           </ns3:source>
-        </ns3:address>
-        <ns3:phone number="+1 404 555 0177" type="MOBILE" location="H" profileDefault="true"/>
-        <ns3:email profileDefault="true">
-          <ns5:address>leakcheck.markerguest@example.test</ns5:address>
-        </ns3:email>
-        <ns3:membership code="PLACEHOLDER" value="900000078" status="ACTIVE"/>
-        <ns3:creditCard token="SYNTH-CC-TOKEN-Q7X4K9M2P5W8" type="SYNTH">
-          <ns5:token>SYNTH-CC-TOKEN-Q7X4K9M2P5W8</ns5:token>
-          <ns5:expiry>2099-12</ns5:expiry>
-        </ns3:creditCard>
+        </ns2:address>
+        <ns2:phone number="+1 404 555 0177" type="MOBILE" location="H" profileDefault="true"/>
+        <ns2:email profileDefault="true">
+          <ns2:address>leakcheck.markerguest@example.test</ns2:address>
+        </ns2:email>
+        <ns2:membership code="PLACEHOLDER" value="900000078" status="ACTIVE"/>
+        <ns2:creditCard token="SYNTH-CC-TOKEN-Q7X4K9M2P5W8" type="SYNTH">
+          <ns3:token>SYNTH-CC-TOKEN-Q7X4K9M2P5W8</ns3:token>
+          <ns3:expiry>2099-12</ns3:expiry>
+        </ns2:creditCard>
       </ns2:initiateGuest>
     </ns4:searchGuestResponse>
   </soap:Body>

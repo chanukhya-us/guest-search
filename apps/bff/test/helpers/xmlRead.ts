@@ -75,7 +75,7 @@ const selectNs = xpath.useNamespaces({ ...NS });
 
 /**
  * Evaluate an XPath expression whose prefixes are `NS` keys, e.g.
- * `select(doc, '//svc:searchCriteria/complex:name/basic:surname')`. Returns matched nodes.
+ * `select(doc, '//svc:searchCriteria/initiate:name/complex:surname')`. Returns matched nodes.
  */
 export function select(root: Node, expression: string): Node[] {
   // xpath's typings use lib.dom's Node; xmldom nodes implement the same interface.

@@ -15,7 +15,7 @@ export const REFERENCE_HEADER: HeaderContext = createHeaderContext(
     languageCode: 'en',
     countryCode: 'US',
     channel: 'TEST-CHANNEL',
-    subChannel: 'TEST-SUBCHANNEL',
+    subChannels: ['TEST-SUBCHANNEL', 'TEST-PROFILE'],
     environment: 'local',
     serviceUser: 'svc-test-user',
     sequence: 1,

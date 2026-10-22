@@ -113,6 +113,14 @@ const GENERIC_NS = /schemas\.xmlsoap\.org|ihg\.com\/schema/i;
 const SOAP_CODE_LETTERS = new Set(['O', 'H']);
 /** A `'true'` / `'false'` literal passed straight to xmlbuilder2 `.att(...)`. */
 const ATT_BOOLEAN = /\.att\([^)]*(['"`])(?:true|false)\1/;
+/**
+ * Environment-specific header values from the team's sample (docs/Request.txt). They must
+ * come from runtime configuration (copilot-instructions.md §6), so no source file may hold them.
+ */
+const SAMPLE_HEADER_VALUES = new Set(['MSCUI', 'ATLR3', 'int_dc4']);
+/** Sample transport values that only config.ts may hold, as documented defaults. */
+const CONFIG_DEFAULT_VALUES = new Set(['searchGuest', 'WEBWB']);
+const CONFIG = 'config.ts';
 
 /**
  * Scan one file. `file` is a POSIX path relative to `src/`; files under `soap/` get the
@@ -131,6 +139,10 @@ function scanSource(source: string, file: string): Finding[] {
     else if (GENERIC_NS.test(value)) flag(line, 'namespace-like URI', value);
     if (value === '0000') flag(line, 'status code', value);
     if (inSoap && SOAP_CODE_LETTERS.has(value)) flag(line, 'attribute value', value);
+    if (SAMPLE_HEADER_VALUES.has(value)) flag(line, 'sample header value', value);
+    if (file !== CONFIG && CONFIG_DEFAULT_VALUES.has(value)) {
+      flag(line, 'config default outside config.ts', value);
+    }
   }
   if (inSoap) {
     code.forEach((text, idx) => {
@@ -160,6 +172,8 @@ describe('contract literal scan of apps/bff/src (Req 7.6)', () => {
     const files = listSources();
     expect(files).toContain(CONTRACT);
     expect(files).toContain('soap/headerBuilder.ts');
+    expect(files).toContain('soap/transport.ts');
+    expect(files).toContain(CONFIG);
     expect(files.every((f) => !f.includes('\\'))).toBe(true);
   });
 
@@ -168,6 +182,21 @@ describe('contract literal scan of apps/bff/src (Req 7.6)', () => {
       .filter((f) => f !== CONTRACT)
       .flatMap((f) => scanSource(read(f), f));
     expect(findings.map(format)).toEqual([]);
+  });
+
+  it('keeps the sample header values out of every file, contract.ts included', () => {
+    const rules = new Set(['sample header value', 'config default outside config.ts']);
+    const findings = listSources()
+      .flatMap((f) => scanSource(read(f), f))
+      .filter((f) => rules.has(f.rule));
+    expect(findings.map(format)).toEqual([]);
+  });
+
+  it('config.ts holds the sample transport defaults (positive control)', () => {
+    const found = scanSource(read(CONFIG), 'x.ts').filter(
+      (f) => f.rule === 'config default outside config.ts',
+    );
+    expect(found.map((f) => f.literal).sort()).toEqual(['WEBWB', 'searchGuest']);
   });
 
   it('flags contract.ts itself (positive control: the rules see real literals)', () => {
@@ -247,6 +276,21 @@ describe('scanSource self-test', () => {
     expect(scanSource(src, 'x.ts').map((f) => [f.line, f.rule])).toEqual([
       [3, 'namespace-like URI'],
     ]);
+  });
+
+  it('flags sample header values anywhere and sample transport defaults outside config.ts', () => {
+    const src = "const c = 'MSCUI';\nconst e = `int_dc4`;\nconst a = 'searchGuest';\n";
+    expect(scanSource(src, 'soap/headerBuilder.ts').map((f) => [f.line, f.rule])).toEqual([
+      [1, 'sample header value'],
+      [2, 'sample header value'],
+      [3, 'config default outside config.ts'],
+    ]);
+    expect(scanSource(src, 'config.ts').map((f) => f.rule)).toEqual([
+      'sample header value',
+      'sample header value',
+    ]);
+    // Only exact literals: identifiers and longer strings that contain the words are fine.
+    expect(scanSource("const x = 'searchGuestRequest'; // MSCUI\n", 'soap/x.ts')).toEqual([]);
   });
 
   it('handles Windows line endings', () => {

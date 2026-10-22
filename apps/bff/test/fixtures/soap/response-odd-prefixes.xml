@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   searchGuestResponse: the same three guests as response-multiple.xml, with unfamiliar
-  prefixes (SOAP-ENV, cmn, ig, cx, svc, bt) declared on the Envelope and the basictypes prefix
-  rebound mid-document. Must parse to the same result as response-multiple.xml (Req 11.4).
-  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+  prefixes (SOAP-ENV, cmn, ig, cx, svc, bt) declared on the Envelope and the complex prefix
+  (cx) rebound to a decoy URI mid-document. Must parse to the same result as
+  response-multiple.xml (Req 11.4).
+  Synthetic data only. Provisional placement mirroring the request sample (docs/Request.txt)
+  until a response sample or XSD.
 -->
 <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:cmn="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1" xmlns:ig="http://crm.ihg.com/schema/v1_0/initiate" xmlns:cx="http://common.crm.ihg.com/schema/v1_0/complex" xmlns:svc="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1" xmlns:bt="http://common.crm.ihg.com/schema/v1_0/basictypes" xmlns:ns2="urn:example:decoy">
   <SOAP-ENV:Header/>
@@ -14,56 +16,56 @@
       </cmn:header>
       <ig:initiateGuest score="99.0" status="A" gender="F">
         <ig:enterpriseId>900000002</ig:enterpriseId>
-        <cx:name>
-          <bt:given>Blake</bt:given>
-          <bt:surname>Testguest</bt:surname>
-        </cx:name>
-        <cx:address locationCode="H" profileDefault="true">
+        <ig:name>
+          <cx:given>Blake</cx:given>
+          <cx:surname>Testguest</cx:surname>
+        </ig:name>
+        <ig:address locationCode="H" profileDefault="true">
           <cx:source>
-            <bt:line1>102 Example Way</bt:line1>
-            <bt:locality1>Atlanta</bt:locality1>
-            <bt:region1>GA</bt:region1>
-            <bt:postalCode>30399</bt:postalCode>
-            <bt:country>US</bt:country>
+            <cx:line1>102 Example Way</cx:line1>
+            <cx:locality1>Atlanta</cx:locality1>
+            <cx:region1>GA</cx:region1>
+            <cx:postalCode>30399</cx:postalCode>
+            <cx:country>US</cx:country>
           </cx:source>
-        </cx:address>
-        <cx:phone number="+1 404 555 0102" type="MOBILE" location="H" profileDefault="true"/>
-        <cx:email profileDefault="true">
-          <bt:address>blake.testguest@example.test</bt:address>
-        </cx:email>
-        <cx:membership code="PLACEHOLDER" value="900000012" status="ACTIVE"/>
+        </ig:address>
+        <ig:phone number="+1 404 555 0102" type="MOBILE" location="H" profileDefault="true"/>
+        <ig:email profileDefault="true">
+          <ig:address>blake.testguest@example.test</ig:address>
+        </ig:email>
+        <ig:membership code="PLACEHOLDER" value="900000012" status="ACTIVE"/>
       </ig:initiateGuest>
       <ig:initiateGuest score="87.25" status="A" gender="M">
         <ig:enterpriseId>900000003</ig:enterpriseId>
-        <cx:name xmlns:bt="urn:example:decoy" xmlns:b2="http://common.crm.ihg.com/schema/v1_0/basictypes">
-          <b2:given>Casey</b2:given>
-          <b2:surname>Testguest</b2:surname>
-          <bt:surname>Decoy-not-mapped</bt:surname>
-        </cx:name>
-        <cx:address locationCode="B" profileDefault="true">
+        <ig:name xmlns:cx="urn:example:decoy" xmlns:c2="http://common.crm.ihg.com/schema/v1_0/complex">
+          <c2:given>Casey</c2:given>
+          <c2:surname>Testguest</c2:surname>
+          <cx:surname>Decoy-not-mapped</cx:surname>
+        </ig:name>
+        <ig:address locationCode="B" profileDefault="true">
           <cx:source>
-            <bt:line1>103 Example Way</bt:line1>
-            <bt:locality1>Toronto</bt:locality1>
-            <bt:region1>ON</bt:region1>
-            <bt:postalCode>M5V 0Z0</bt:postalCode>
-            <bt:country>CA</bt:country>
+            <cx:line1>103 Example Way</cx:line1>
+            <cx:locality1>Toronto</cx:locality1>
+            <cx:region1>ON</cx:region1>
+            <cx:postalCode>M5V 0Z0</cx:postalCode>
+            <cx:country>CA</cx:country>
           </cx:source>
-        </cx:address>
-        <cx:phone number="+1 404 555 0103" type="WORK" location="B" profileDefault="true"/>
-        <cx:email profileDefault="true">
-          <bt:address>casey.testguest@example.test</bt:address>
-        </cx:email>
+        </ig:address>
+        <ig:phone number="+1 404 555 0103" type="WORK" location="B" profileDefault="true"/>
+        <ig:email profileDefault="true">
+          <ig:address>casey.testguest@example.test</ig:address>
+        </ig:email>
       </ig:initiateGuest>
       <ig:initiateGuest score="64" status="I">
         <ig:enterpriseId>900000004</ig:enterpriseId>
-        <cx:name>
-          <bt:given>Devon</bt:given>
-          <bt:surname>Testguest</bt:surname>
-        </cx:name>
-        <cx:email profileDefault="true">
-          <bt:address>devon.testguest@example.test</bt:address>
-        </cx:email>
-        <cx:membership code="PLACEHOLDER" value="900000014" status="INACTIVE"/>
+        <ig:name>
+          <cx:given>Devon</cx:given>
+          <cx:surname>Testguest</cx:surname>
+        </ig:name>
+        <ig:email profileDefault="true">
+          <ig:address>devon.testguest@example.test</ig:address>
+        </ig:email>
+        <ig:membership code="PLACEHOLDER" value="900000014" status="INACTIVE"/>
       </ig:initiateGuest>
     </svc:searchGuestResponse>
   </SOAP-ENV:Body>

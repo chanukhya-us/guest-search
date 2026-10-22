@@ -5,7 +5,7 @@
   GENERATED: apps/bff/test/fixtures/soap/response-60-guests.xml is rendered from
   scripts/templates/response-60-guests.template.xml by scripts/gen-fixtures.ts
   (npm run gen:fixtures). Edit the template, never the generated file; a test fails on drift.
-  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+  Synthetic data only. Provisional placement mirroring the request sample (docs/Request.txt) until a response sample or XSD.
 -->
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header/>
@@ -17,24 +17,24 @@
 {{#guest}}
       <ns2:initiateGuest score="{{score}}" status="A">
         <ns2:enterpriseId>9000000{{nn}}</ns2:enterpriseId>
-        <ns3:name>
-          <ns5:given>Guest{{nn}}</ns5:given>
-          <ns5:surname>Many</ns5:surname>
-        </ns3:name>
-        <ns3:address locationCode="H" profileDefault="true">
+        <ns2:name>
+          <ns3:given>Guest{{nn}}</ns3:given>
+          <ns3:surname>Many</ns3:surname>
+        </ns2:name>
+        <ns2:address locationCode="H" profileDefault="true">
           <ns3:source>
-            <ns5:line1>1{{nn}} Example Way</ns5:line1>
-            <ns5:locality1>Atlanta</ns5:locality1>
-            <ns5:region1>GA</ns5:region1>
-            <ns5:postalCode>30399</ns5:postalCode>
-            <ns5:country>US</ns5:country>
+            <ns3:line1>1{{nn}} Example Way</ns3:line1>
+            <ns3:locality1>Atlanta</ns3:locality1>
+            <ns3:region1>GA</ns3:region1>
+            <ns3:postalCode>30399</ns3:postalCode>
+            <ns3:country>US</ns3:country>
           </ns3:source>
-        </ns3:address>
-        <ns3:phone number="+1 404 555 01{{nn}}" type="MOBILE" location="H" profileDefault="true"/>
-        <ns3:email profileDefault="true">
-          <ns5:address>guest{{nn}}.many@example.test</ns5:address>
-        </ns3:email>
-        <ns3:membership code="PLACEHOLDER" value="9000000{{nn}}" status="ACTIVE"/>
+        </ns2:address>
+        <ns2:phone number="+1 404 555 01{{nn}}" type="MOBILE" location="H" profileDefault="true"/>
+        <ns2:email profileDefault="true">
+          <ns2:address>guest{{nn}}.many@example.test</ns2:address>
+        </ns2:email>
+        <ns2:membership code="PLACEHOLDER" value="9000000{{nn}}" status="ACTIVE"/>
       </ns2:initiateGuest>
 {{/guest}}
     </ns4:searchGuestResponse>

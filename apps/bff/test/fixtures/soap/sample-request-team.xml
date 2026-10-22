@@ -1,0 +1,48 @@
+<!--
+  The project team's only real sample request: the SOAP envelope from the curl command in
+  docs/Request.txt, kept with its original layout. Source of truth for the request side
+  (test/unit/soap/sampleRequest.test.ts proves the mapper output matches it).
+  Sanitized (copilot-instructions.md §6, §13): user/@id (a personal account in the original)
+  is replaced by the LOCAL\dev-user placeholder, and transactionId/@id by a TEST-NET-1 address
+  (RFC 5737) plus a synthetic UUID, keeping the original "<ip>-<UUID>" shape. Everything else,
+  including the criteria and the empty email address and membership value, is as received.
+-->
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+    <soap:Body>
+        <ns4:searchGuestRequest xmlns="http://atp.ihg.com/schema/common/ATPCommonServiceTypes/v1" xmlns:ns2="http://crm.ihg.com/schema/v1_0/initiate" xmlns:ns3="http://common.crm.ihg.com/schema/v1_0/complex" xmlns:ns4="http://atp.ihg.com/schema/crs/initiate/servicetypes/v1" xmlns:ns5="http://common.crm.ihg.com/schema/v1_0/basictypes">
+            <header>
+                <language isoCountryCode="US" isoLanguageCode="en"/>
+                <channel name="MSCUI">
+                    <subChannel name="ATLR3">
+                        <subChannel name="profile"/></subChannel>
+                </channel>
+                <headerVersion major="1" minor="0"/>
+                <environment name="int_dc4"/>
+                <user id="LOCAL\dev-user"/>
+                <transactionId id="192.0.2.10-00000000-0000-4000-8000-000000000001"/>
+                <transactionSequence number="1"/>
+                <sendTimeStamp>2023-06-06T01:27:14.430Z</sendTimeStamp>
+            </header>
+            <ns4:searchCriteria status="O">
+                <ns2:name>
+                    <ns3:given>Dan</ns3:given>
+                    <ns3:surname>Revees</ns3:surname>
+                </ns2:name>
+                <ns2:phone location="H" number="2482500555" profileDefault="true"/>
+                <ns2:email profileDefault="true">
+                    <ns2:address></ns2:address>
+                </ns2:email>
+                <ns2:address locationCode="H" profileDefault="true">
+                    <ns3:source>
+                         <ns3:region1>Gerogia</ns3:region1>
+                        <ns3:country>US</ns3:country>
+                    </ns3:source>
+                </ns2:address>
+                <ns2:membership code="PC" value=""/>
+            </ns4:searchCriteria>
+            <ns4:allAttributes>true</ns4:allAttributes>
+            <ns4:allHistory>false</ns4:allHistory>
+            <ns4:maxResults>50</ns4:maxResults>
+        </ns4:searchGuestRequest>
+    </soap:Body>
+</soap:Envelope>

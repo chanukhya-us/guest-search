@@ -1,11 +1,24 @@
-// Unit tests for the SOAP header builder (task 3.3, Req 8.1-8.3, 8.6, 8.7).
-// Broader header/config coverage is task 3.4.
+// Unit tests for the SOAP header builder (task 3.3, Req 8.1-8.3, 8.6, 8.7). The header shape
+// is the team's sample request (docs/Request.txt): attributes on `common` elements, a nested
+// subChannel chain, and sendTimeStamp as the only text value.
 import { DOMParser, type Element } from '@xmldom/xmldom';
 import { create } from 'xmlbuilder2';
 import { describe, expect, it } from 'vitest';
 import { EnvSecretProvider, loadConfig, type AppConfig } from '../../../src/config.js';
-import { EL, HEADER_CREDENTIAL_LOCATION, NS, ORDER, nsUri } from '../../../src/soap/contract.js';
-import { appendHeader, createHeaderContext } from '../../../src/soap/headerBuilder.js';
+import {
+  DEFAULTS,
+  EL,
+  HEADER_CREDENTIAL_LOCATION,
+  NS,
+  ORDER,
+  nsUri,
+  qname,
+} from '../../../src/soap/contract.js';
+import {
+  appendHeader,
+  createHeaderContext,
+  type HeaderContext,
+} from '../../../src/soap/headerBuilder.js';
 
 const REQUEST_ID = '00000000-0000-4000-8000-000000000001';
 const FIXED = new Date('2026-10-21T12:00:00.000Z');
@@ -15,7 +28,7 @@ const cfg: AppConfig['soap']['header'] = {
   languageCode: 'en',
   countryCode: 'US',
   channel: 'TEST-CHANNEL',
-  subChannel: 'TEST-SUB',
+  subChannels: ['TEST-SUB', 'TEST-LEAF'],
   environment: 'local',
   serviceUser: 'svc-test-user',
   sequence: 1,
@@ -25,9 +38,12 @@ const cfg: AppConfig['soap']['header'] = {
 const deps = { now: () => FIXED, requestId: REQUEST_ID };
 
 /** Build a parent with xmlbuilder2, append the header, serialize, parse back with xmldom. */
-function render(header = createHeaderContext(cfg, deps)): { xml: string; header: Element } {
+function render(header: HeaderContext = createHeaderContext(cfg, deps)): {
+  xml: string;
+  header: Element;
+} {
   const doc = create({ version: '1.0', encoding: 'UTF-8' });
-  const root = doc.ele(nsUri(EL.soapHeader), 'soap:Header');
+  const root = doc.ele(nsUri(EL.searchGuestRequest), qname(EL.searchGuestRequest));
   appendHeader(root, header);
   const xml = doc.end();
   const parsed = new DOMParser().parseFromString(xml, 'text/xml');
@@ -39,6 +55,39 @@ function render(header = createHeaderContext(cfg, deps)): { xml: string; header:
 const children = (parent: Element): Element[] =>
   Array.from(parent.childNodes).filter((n): n is Element => n.nodeType === 1);
 
+/** Unqualified attributes of an element as a plain object. */
+const attrs = (e: Element): Record<string, string> =>
+  Object.fromEntries(
+    Array.from(e.attributes)
+      .filter((a) => a.namespaceURI === null)
+      .map((a) => [a.localName ?? a.name, a.value]),
+  );
+
+const child = (header: Element, local: string): Element => {
+  const found = children(header).find((e) => e.localName === local);
+  expect(found, local).toBeDefined();
+  return found as Element;
+};
+
+/** Names along the channel > subChannel > subChannel ... chain. */
+function channelChain(header: Element): string[] {
+  const out: string[] = [];
+  let level: Element | undefined = child(header, EL.headerChannel.local);
+  while (level !== undefined) {
+    out.push(level.getAttribute('name') ?? '');
+    const next: Element[] = children(level);
+    expect(next.length).toBeLessThanOrEqual(1);
+    if (next[0] !== undefined) {
+      expect([next[0].namespaceURI, next[0].localName]).toEqual([
+        NS.common,
+        EL.headerSubChannel.local,
+      ]);
+    }
+    level = next[0];
+  }
+  return out;
+}
+
 describe('createHeaderContext', () => {
   it('uses the requestId as transaction ID and the injected clock as timestamp', () => {
     expect(createHeaderContext(cfg, deps)).toEqual({
@@ -48,10 +97,17 @@ describe('createHeaderContext', () => {
       languageCode: 'en',
       countryCode: 'US',
       channel: 'TEST-CHANNEL',
-      subChannel: 'TEST-SUB',
+      subChannels: ['TEST-SUB', 'TEST-LEAF'],
       environment: 'local',
       serviceUser: 'svc-test-user',
     });
+  });
+
+  it('copies the subchannel list, so later config changes cannot alter the context', () => {
+    const list = ['A', 'B'];
+    const h = createHeaderContext({ ...cfg, subChannels: list }, deps);
+    list.push('C');
+    expect(h.subChannels).toEqual(['A', 'B']);
   });
 
   it('formats the timestamp as ISO 8601 UTC xs:dateTime', () => {
@@ -65,10 +121,6 @@ describe('createHeaderContext', () => {
 
   it('takes the sequence from config', () => {
     expect(createHeaderContext({ ...cfg, sequence: 7 }, deps).sequence).toBe(7);
-  });
-
-  it('is deterministic for the same clock and requestId', () => {
-    expect(createHeaderContext(cfg, deps)).toEqual(createHeaderContext(cfg, deps));
   });
 
   it('gives each request its own transaction ID (Req 8.1)', () => {
@@ -95,12 +147,11 @@ describe('createHeaderContext', () => {
 
   it('takes every value from loadConfig output, with sequence defaulting to 1 (Req 8.3, 8.6)', () => {
     const env = {
-      SOAP_ENDPOINT: 'http://localhost:8080/GuestSearchService',
-      SOAP_ACTION: 'test-action',
+      SOAP_ENDPOINT: 'http://localhost:8080/InitiateService',
       SOAP_HEADER_LANGUAGE_CODE: 'fr',
       SOAP_HEADER_COUNTRY_CODE: 'CA',
       SOAP_HEADER_CHANNEL: 'cfg-channel',
-      SOAP_HEADER_SUB_CHANNEL: 'cfg-sub',
+      SOAP_HEADER_SUB_CHANNEL: 'cfg-sub,cfg-leaf',
       SOAP_HEADER_ENVIRONMENT: 'cfg-env',
       SOAP_HEADER_SERVICE_USER: 'cfg-user',
       SESSION_SECRET: 'test-session-secret-0123456789abcdef',
@@ -111,7 +162,7 @@ describe('createHeaderContext', () => {
       languageCode: 'fr',
       countryCode: 'CA',
       channel: 'cfg-channel',
-      subChannel: 'cfg-sub',
+      subChannels: ['cfg-sub', 'cfg-leaf'],
       environment: 'cfg-env',
       serviceUser: 'cfg-user',
     });
@@ -123,38 +174,88 @@ describe('createHeaderContext', () => {
 });
 
 describe('appendHeader', () => {
-  it('emits every header child in contract order, by namespace URI, with config values', () => {
+  it('emits every header child in sample order, in the common namespace', () => {
     const { header } = render();
-    const els = children(header);
-    expect(els.map((e) => [e.namespaceURI, e.localName])).toEqual(
+    expect(children(header).map((e) => [e.namespaceURI, e.localName])).toEqual(
       ORDER.header.map((k) => [nsUri(EL[k]), EL[k].local]),
     );
-    const text = Object.fromEntries(els.map((e) => [e.localName, e.textContent]));
-    expect(text).toEqual({
-      [EL.headerTransactionId.local]: REQUEST_ID,
-      [EL.headerSequence.local]: '1',
-      [EL.headerTimestamp.local]: '2026-10-21T12:00:00.000Z',
-      [EL.headerLanguageCode.local]: 'en',
-      [EL.headerCountryCode.local]: 'US',
-      [EL.headerChannel.local]: 'TEST-CHANNEL',
-      [EL.headerSubChannel.local]: 'TEST-SUB',
-      [EL.headerEnvironment.local]: 'local',
-      [EL.headerServiceUser.local]: 'svc-test-user',
+    expect(ORDER.header.map((k) => EL[k].local)).toEqual([
+      'language',
+      'channel',
+      'headerVersion',
+      'environment',
+      'user',
+      'transactionId',
+      'transactionSequence',
+      'sendTimeStamp',
+    ]);
+  });
+
+  it('writes every value as the sample attribute, and the timestamp as text', () => {
+    const { header } = render();
+    const attrsOf = (local: string) => attrs(child(header, local));
+    expect(attrsOf('language')).toEqual({ isoCountryCode: 'US', isoLanguageCode: 'en' });
+    expect(attrsOf('channel')).toEqual({ name: 'TEST-CHANNEL' });
+    expect(attrsOf('headerVersion')).toEqual({
+      major: DEFAULTS.headerVersionMajor,
+      minor: DEFAULTS.headerVersionMinor,
     });
+    expect([DEFAULTS.headerVersionMajor, DEFAULTS.headerVersionMinor]).toEqual(['1', '0']);
+    expect(attrsOf('environment')).toEqual({ name: 'local' });
+    expect(attrsOf('user')).toEqual({ id: 'svc-test-user' });
+    expect(attrsOf('transactionId')).toEqual({ id: REQUEST_ID });
+    expect(attrsOf('transactionSequence')).toEqual({ number: '1' });
+    const ts = child(header, 'sendTimeStamp');
+    expect(attrs(ts)).toEqual({});
+    expect(ts.textContent).toBe('2026-10-21T12:00:00.000Z');
+    // Only sendTimeStamp has content; subChannel nesting is checked separately.
+    for (const e of children(header)) {
+      if (e.localName !== 'sendTimeStamp' && e.localName !== 'channel') {
+        expect(e.childNodes.length, String(e.localName)).toBe(0);
+      }
+    }
+  });
+
+  it.each([
+    [[], ['C']],
+    [['ATLR3'], ['C', 'ATLR3']],
+    [
+      ['ATLR3', 'profile'],
+      ['C', 'ATLR3', 'profile'],
+    ],
+    [
+      ['a', 'b', 'c'],
+      ['C', 'a', 'b', 'c'],
+    ],
+  ])('nests subchannels %j inside the channel, in order', (subChannels, chain) => {
+    const h = { ...createHeaderContext(cfg, deps), channel: 'C', subChannels };
+    expect(channelChain(render(h).header)).toEqual(chain);
   });
 
   it('places the header in the common namespace under its parent', () => {
     const { header } = render();
     expect(header.namespaceURI).toBe(NS.common);
-    expect(header.parentNode).toMatchObject({ namespaceURI: NS.soap, localName: 'Header' });
+    expect(header.parentNode).toMatchObject({
+      namespaceURI: NS.svc,
+      localName: EL.searchGuestRequest.local,
+    });
   });
 
-  it('escapes config values through xmlbuilder2', () => {
-    const h = { ...createHeaderContext(cfg, deps), channel: 'a<b>&"c\'' };
+  it('escapes config values through xmlbuilder2, in attributes and text', () => {
+    const tricky = 'a<b>&"c\'&amp;';
+    const h = {
+      ...createHeaderContext(cfg, deps),
+      channel: tricky,
+      subChannels: [tricky],
+      serviceUser: 'LOCAL\\' + tricky,
+      timestamp: tricky,
+    };
     const { xml, header } = render(h);
     expect(xml).not.toContain('a<b>');
-    const channel = children(header).find((e) => e.localName === EL.headerChannel.local);
-    expect(channel?.textContent).toBe('a<b>&"c\'');
+    expect(child(header, 'channel').getAttribute('name')).toBe(tricky);
+    expect(channelChain(header)).toEqual([tricky, tricky]);
+    expect(child(header, 'user').getAttribute('id')).toBe('LOCAL\\' + tricky);
+    expect(child(header, 'sendTimeStamp').textContent).toBe(tricky);
   });
 
   it('is byte-identical for the same clock and requestId', () => {

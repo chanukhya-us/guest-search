@@ -29,8 +29,8 @@ describe('element lookup by namespace URI + local name', () => {
   // Unfamiliar prefixes and the default namespace: lookups must not depend on prefixes.
   const doc = parseXml(
     `<e:Envelope xmlns:e="${NS.soap}"><e:Body><searchGuestRequest xmlns="${NS.svc}">` +
-      `<searchCriteria status="O"><x:phone xmlns:x="${NS.complex}" number="1"/>` +
-      `<x:phone xmlns:x="${NS.complex}" number="2"/><phone number="wrong-ns"/>` +
+      `<searchCriteria status="O"><x:phone xmlns:x="${NS.initiate}" number="1"/>` +
+      `<x:phone xmlns:x="${NS.initiate}" number="2"/><phone number="wrong-ns"/>` +
       `</searchCriteria></searchGuestRequest></e:Body></e:Envelope>`,
   );
   const crit = [EL.envelope, EL.body, EL.searchGuestRequest, EL.searchCriteria];
@@ -47,8 +47,8 @@ describe('element lookup by namespace URI + local name', () => {
   });
 
   it('select uses NS keys as XPath prefixes', () => {
-    expect(select(doc, '//svc:searchCriteria/complex:phone/@number')).toHaveLength(2);
-    expect(() => select(doc, 'count(//complex:phone)')).toThrow();
+    expect(select(doc, '//svc:searchCriteria/initiate:phone/@number')).toHaveLength(2);
+    expect(() => select(doc, 'count(//initiate:phone)')).toThrow();
   });
 });
 
@@ -82,8 +82,8 @@ describe('readMappedRequest', () => {
     expect(() => readMappedRequest(`<s:Envelope xmlns:s="${NS.soap}"/>`)).toThrow();
     const twoNames =
       `<s:Envelope xmlns:s="${NS.soap}"><s:Body><v:searchGuestRequest xmlns:v="${NS.svc}">` +
-      `<v:searchCriteria><n:name xmlns:n="${NS.complex}"/><n:name xmlns:n="${NS.complex}"/>` +
-      `<n:phone xmlns:n="${NS.complex}" number="1"/><n:phone xmlns:n="${NS.complex}" number="2"/>` +
+      `<v:searchCriteria><n:name xmlns:n="${NS.initiate}"/><n:name xmlns:n="${NS.initiate}"/>` +
+      `<n:phone xmlns:n="${NS.initiate}" number="1"/><n:phone xmlns:n="${NS.initiate}" number="2"/>` +
       `</v:searchCriteria></v:searchGuestRequest></s:Body></s:Envelope>`;
     expect(() => readMappedRequest(twoNames)).toThrow(/phone/);
   });

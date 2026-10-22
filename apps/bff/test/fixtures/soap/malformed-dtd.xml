@@ -19,10 +19,10 @@
       </header>
       <ns2:initiateGuest score="90" status="A">
         <ns2:enterpriseId>900000091</ns2:enterpriseId>
-        <ns3:name>
-          <ns5:given>&lol3;</ns5:given>
-          <ns5:surname>&xxe;</ns5:surname>
-        </ns3:name>
+        <ns2:name>
+          <ns3:given>&lol3;</ns3:given>
+          <ns3:surname>&xxe;</ns3:surname>
+        </ns2:name>
       </ns2:initiateGuest>
     </ns4:searchGuestResponse>
   </soap:Body>

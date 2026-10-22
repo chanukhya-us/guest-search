@@ -1,4 +1,5 @@
-// Unit tests for the SOAP contract module (task 3.1, Req 7.1-7.5).
+// Unit tests for the SOAP contract module (task 3.1, Req 7.1-7.5). Request placements come
+// from the team's sample request (docs/Request.txt).
 // The src/** literal scan (Req 7.6) is task 3.4.
 import { describe, expect, it } from 'vitest';
 import {
@@ -9,9 +10,11 @@ import {
   NS,
   ORDER,
   PREFIX,
+  SAMPLE_SOURCE,
   SUCCESS,
   nsUri,
   qname,
+  type ElKey,
 } from '../../../src/soap/contract.js';
 
 describe('soap contract', () => {
@@ -33,11 +36,84 @@ describe('soap contract', () => {
     expect(new Set(Object.values(PREFIX)).size).toBe(Object.keys(NS).length);
   });
 
-  it('places every element in a known namespace (or none) and marks it unverified', () => {
+  it('places every element in a known namespace (or none); verified entries cite a source', () => {
     for (const e of Object.values(EL)) {
       if (e.ns !== null) expect(Object.keys(NS)).toContain(e.ns);
       expect(e.local).toMatch(/^[A-Za-z][\w-]*$/);
-      expect(e.verified).toBe(false);
+      if (e.verified) expect(e.xsd).toBe(SAMPLE_SOURCE);
+      else expect(e.xsd).toBeUndefined();
+    }
+  });
+
+  it('marks exactly the elements of the team sample request as verified', () => {
+    const verified = (Object.keys(EL) as ElKey[]).filter((k) => EL[k].verified).sort();
+    expect(verified).toEqual(
+      [
+        'envelope',
+        'body',
+        'searchGuestRequest',
+        'header',
+        'headerLanguage',
+        'headerChannel',
+        'headerSubChannel',
+        'headerVersion',
+        'headerEnvironment',
+        'headerUser',
+        'headerTransactionId',
+        'headerTransactionSequence',
+        'headerSendTimeStamp',
+        'searchCriteria',
+        'name',
+        'given',
+        'surname',
+        'phone',
+        'email',
+        'emailAddress',
+        'address',
+        'source',
+        'region1',
+        'country',
+        'membership',
+        'allAttributes',
+        'allHistory',
+        'maxResults',
+      ].sort(),
+    );
+    // Not in the sample: inferred placement only.
+    for (const k of ['line1', 'locality1', 'postalCode'] as const) {
+      expect(EL[k]).toMatchObject({ ns: 'complex', verified: false });
+    }
+  });
+
+  it('places the request criteria as in the sample: groups in initiate, children in complex', () => {
+    const where = (keys: readonly ElKey[]) => keys.map((k) => EL[k].ns);
+    const groups = ['name', 'phone', 'email', 'emailAddress', 'address', 'membership'] as const;
+    const parts = ['given', 'surname', 'source', 'region1', 'country'] as const;
+    expect(where(groups)).toEqual(groups.map(() => 'initiate'));
+    expect(where(parts)).toEqual(parts.map(() => 'complex'));
+    expect(EL.header.ns).toBe('common');
+    expect(ORDER.searchGuestRequest[0]).toBe('header');
+  });
+
+  it('mirrors the request placement for the unverified response identities', () => {
+    const pairs: [ElKey, ElKey][] = [
+      ['guestName', 'name'],
+      ['guestGiven', 'given'],
+      ['guestSurname', 'surname'],
+      ['guestAddress', 'address'],
+      ['guestAddressSource', 'source'],
+      ['guestLine1', 'line1'],
+      ['guestLocality1', 'locality1'],
+      ['guestRegion1', 'region1'],
+      ['guestPostalCode', 'postalCode'],
+      ['guestCountry', 'country'],
+      ['guestPhone', 'phone'],
+      ['guestEmail', 'email'],
+      ['guestEmailAddress', 'emailAddress'],
+      ['guestMembership', 'membership'],
+    ];
+    for (const [guest, request] of pairs) {
+      expect(EL[guest]).toEqual({ ns: EL[request].ns, local: EL[request].local, verified: false });
     }
   });
 
@@ -84,6 +160,8 @@ describe('soap contract', () => {
       addressProfileDefault: 'true',
       allAttributes: 'true',
       allHistory: 'false',
+      headerVersionMajor: '1',
+      headerVersionMinor: '0',
     });
   });
 

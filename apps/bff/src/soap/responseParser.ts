@@ -8,6 +8,7 @@
  *   - `<!DOCTYPE` / `<!ENTITY` are rejected before parsing, so no entity is ever expanded or
  *     resolved (billion laughs, XXE). A parsed `doctype` is rejected again as a second net.
  *   - Every xmldom warning, error and fatal error throws; there is no recovery mode (Req 11.2).
+ *     The single exception is xmldom's U+FFFD warning (user decision, see `isToleratedWarning`).
  *   - Elements are matched by namespace URI + local name from `EL`, never by prefix (Req 11.4).
  *   - Only `ALLOW`-listed attributes and child elements are read. Unknown children such as
  *     `creditCard` are never read, mapped or returned (Req 12.10, 12.11).
@@ -239,9 +240,23 @@ function mapGuest(g: Element): GuestSearchResult {
 /** Faultcode is unqualified per SOAP 1.1; a SOAP-qualified one is accepted defensively. */
 const FAULTCODE_QUALIFIED: El = { ...EL.faultcode, ns: EL.fault.ns };
 
+/**
+ * The one tolerated xmldom diagnostic: a warning raised whenever the input contains U+FFFD
+ * (xmldom 0.9.12 sax.js: "Unicode replacement character detected, source encoding issues?").
+ * U+FFFD is a legal XML character and plausible in legacy CRM data; the transport's UTF-8
+ * decoder also produces it for invalid bytes. Matched on level AND message, so every other
+ * warning, every error and every fatal error stays fatal.
+ */
+const REPLACEMENT_CHAR_WARNING = /^Unicode replacement character detected\b/;
+
+/** True for the U+FFFD warning only (exported for its unit test). */
+export const isToleratedWarning = (level: string, message: string): boolean =>
+  level === 'warning' && REPLACEMENT_CHAR_WARNING.test(message);
+
 function parseStrict(xml: string): Node {
   const doc = new DOMParser({
-    onError: (level) => {
+    onError: (level, message) => {
+      if (isToleratedWarning(level, message)) return;
       throw new SoapError('UPSTREAM_MALFORMED', level);
     },
   }).parseFromString(xml, 'text/xml');

@@ -6,6 +6,10 @@
  * `.txt()`, which escape every value (Req 9.1, 9.2). Element identities, order and fixed
  * values come from `contract.ts` (Req 9.12, 9.13).
  *
+ * Blank groups are omitted (copilot-instructions.md §5, Req 9.7–9.11). This deliberately
+ * deviates from the team's sample, which sends an empty `email/address` and
+ * `membership/@value=""` (design.md "Found during tasks 3–6").
+ *
  * Address Line 2 is never read (Req 9.6). `line1`, `locality1` and `postalCode` are emitted
  * only when their feature flag is on (Req 9.4); the route rejects disabled fields first
  * (Req 9.5), and the mapper ignores them defensively.
@@ -84,9 +88,10 @@ const GROUPS: Record<GroupKey, GroupBuilder> = {
   phone(criteria, q) {
     const number = present(q.phone);
     if (number === undefined) return; // Req 9.8
+    // Attribute order as in the sample (order is not significant in XML).
     add(criteria, EL.phone)
-      .att('number', checked(number))
       .att('location', DEFAULTS.phoneLocation)
+      .att('number', checked(number))
       .att('profileDefault', DEFAULTS.phoneProfileDefault);
   },
 
@@ -131,25 +136,31 @@ const GROUPS: Record<GroupKey, GroupBuilder> = {
 
 type RequestChildKey = (typeof ORDER.searchGuestRequest)[number];
 
-/** Build the full SOAP 1.1 envelope for `searchGuestRequest` and serialize it. */
+/**
+ * Build the full SOAP 1.1 envelope for `searchGuestRequest` and serialize it. Layout follows
+ * the team's sample (docs/Request.txt): the Envelope declares only `soap`, there is no
+ * soap:Header, and `searchGuestRequest` declares every other namespace and starts with the
+ * `header` element.
+ */
 export function buildSearchGuestRequest(
   q: GuestSearchQuery,
   h: HeaderContext,
   o: MapperOptions,
 ): string {
   const doc = create({ version: '1.0', encoding: 'UTF-8' });
-  const envelope = add(doc, EL.envelope);
-  // Declare every namespace once on the envelope with the sample's aliases (Req 7.1).
+  const envelope = add(doc, EL.envelope); // declares soap through its own qualified name
+  const request = add(add(envelope, EL.body), EL.searchGuestRequest);
+  // Declare every other namespace once, with the sample's aliases and order (Req 7.1).
   for (const key of Object.keys(NS) as NsKey[]) {
-    if (key === 'soap') continue; // declared by the element's own qualified name
+    if (key === 'soap') continue;
     const prefix = PREFIX[key];
-    envelope.att(XMLNS, prefix === '' ? 'xmlns' : 'xmlns:' + prefix, NS[key]);
+    request.att(XMLNS, prefix === '' ? 'xmlns' : 'xmlns:' + prefix, NS[key]);
   }
 
-  appendHeader(add(envelope, EL.soapHeader), h);
-  const request = add(add(envelope, EL.body), EL.searchGuestRequest);
-
   const childBuilders: Record<RequestChildKey, (parent: XMLBuilder) => void> = {
+    header(parent) {
+      appendHeader(parent, h);
+    },
     searchCriteria(parent) {
       const criteria = add(parent, EL.searchCriteria).att('status', DEFAULTS.criteriaStatus);
       for (const key of ORDER.searchCriteria) GROUPS[key](criteria, q, o);

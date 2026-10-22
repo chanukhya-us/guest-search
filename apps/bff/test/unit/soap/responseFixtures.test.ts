@@ -17,7 +17,8 @@ const allFiles = readdirSync(FIXTURE_DIR).filter((f) => /\.(xml|html)$/.test(f))
 
 describe('response fixtures', () => {
   it('the table covers every non-request fixture in the folder', () => {
-    const responses = allFiles.filter((f) => !f.startsWith('request-')).sort();
+    // request-*.xml are mapper outputs; sample-request-*.xml is the team's sample request.
+    const responses = allFiles.filter((f) => !/^(?:sample-)?request-/.test(f)).sort();
     expect(responses).toEqual(Object.keys(RESPONSE_FIXTURES).sort());
   });
 

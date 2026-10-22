@@ -4,7 +4,7 @@
   Exactly one item of each kind has profileDefault="true", and it is NOT the first, so the
   primary must be picked by the flag (Req 12.6). The phone +1 404 555 0121 appears twice
   and must not be deduplicated (Req 12.12).
-  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+  Synthetic data only. Provisional placement mirroring the request sample (docs/Request.txt) until a response sample or XSD.
 -->
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header/>
@@ -15,46 +15,46 @@
       </header>
       <ns2:initiateGuest score="91.5" status="A" gender="F">
         <ns2:enterpriseId>900000021</ns2:enterpriseId>
-        <ns3:name>
-          <ns5:given>Emery</ns5:given>
-          <ns5:surname>Repeatguest</ns5:surname>
-        </ns3:name>
-        <ns3:address locationCode="B" profileDefault="false">
+        <ns2:name>
+          <ns3:given>Emery</ns3:given>
+          <ns3:surname>Repeatguest</ns3:surname>
+        </ns2:name>
+        <ns2:address locationCode="B" profileDefault="false">
           <ns3:source>
-            <ns5:line1>121 Example Way</ns5:line1>
-            <ns5:locality1>Atlanta</ns5:locality1>
-            <ns5:region1>GA</ns5:region1>
-            <ns5:postalCode>30399</ns5:postalCode>
-            <ns5:country>US</ns5:country>
+            <ns3:line1>121 Example Way</ns3:line1>
+            <ns3:locality1>Atlanta</ns3:locality1>
+            <ns3:region1>GA</ns3:region1>
+            <ns3:postalCode>30399</ns3:postalCode>
+            <ns3:country>US</ns3:country>
           </ns3:source>
-        </ns3:address>
-        <ns3:address locationCode="H" profileDefault="true">
+        </ns2:address>
+        <ns2:address locationCode="H" profileDefault="true">
           <ns3:source>
-            <ns5:line1>122 Example Way</ns5:line1>
-            <ns5:locality1>Savannah</ns5:locality1>
-            <ns5:region1>GA</ns5:region1>
-            <ns5:postalCode>31499</ns5:postalCode>
-            <ns5:country>US</ns5:country>
+            <ns3:line1>122 Example Way</ns3:line1>
+            <ns3:locality1>Savannah</ns3:locality1>
+            <ns3:region1>GA</ns3:region1>
+            <ns3:postalCode>31499</ns3:postalCode>
+            <ns3:country>US</ns3:country>
           </ns3:source>
-        </ns3:address>
-        <ns3:address locationCode="O">
+        </ns2:address>
+        <ns2:address locationCode="O">
           <ns3:source>
-            <ns5:line1>123 Example Way</ns5:line1>
-            <ns5:locality1>London</ns5:locality1>
-            <ns5:country>GB</ns5:country>
+            <ns3:line1>123 Example Way</ns3:line1>
+            <ns3:locality1>London</ns3:locality1>
+            <ns3:country>GB</ns3:country>
           </ns3:source>
-        </ns3:address>
-        <ns3:phone number="+1 404 555 0121" type="WORK" location="B" profileDefault="false"/>
-        <ns3:phone number="+1 404 555 0122" type="MOBILE" location="H" profileDefault="true"/>
-        <ns3:phone number="+1 404 555 0121" type="WORK" location="B"/>
-        <ns3:email profileDefault="false">
-          <ns5:address>emery.work@example.test</ns5:address>
-        </ns3:email>
-        <ns3:email profileDefault="true">
-          <ns5:address>emery.repeatguest@example.test</ns5:address>
-        </ns3:email>
-        <ns3:membership code="PLACEHOLDER" value="900000022" status="ACTIVE"/>
-        <ns3:membership code="PLACEHOLDER-2" value="900000023" status="INACTIVE"/>
+        </ns2:address>
+        <ns2:phone number="+1 404 555 0121" type="WORK" location="B" profileDefault="false"/>
+        <ns2:phone number="+1 404 555 0122" type="MOBILE" location="H" profileDefault="true"/>
+        <ns2:phone number="+1 404 555 0121" type="WORK" location="B"/>
+        <ns2:email profileDefault="false">
+          <ns2:address>emery.work@example.test</ns2:address>
+        </ns2:email>
+        <ns2:email profileDefault="true">
+          <ns2:address>emery.repeatguest@example.test</ns2:address>
+        </ns2:email>
+        <ns2:membership code="PLACEHOLDER" value="900000022" status="ACTIVE"/>
+        <ns2:membership code="PLACEHOLDER-2" value="900000023" status="INACTIVE"/>
       </ns2:initiateGuest>
     </ns4:searchGuestResponse>
   </soap:Body>

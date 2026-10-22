@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   searchGuestResponse: one guest with every allowlisted field. WireMock scenario "Single".
-  Synthetic data only. Provisional element placement until Blocker B1 (XSD); aliases from the
+  Synthetic data only. Provisional placement mirroring the request sample (docs/Request.txt) until a response sample or XSD; aliases from the
   approved sample (common is the default namespace).
 -->
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -13,24 +13,24 @@
       </header>
       <ns2:initiateGuest score="98.5" status="A" gender="F">
         <ns2:enterpriseId>900000001</ns2:enterpriseId>
-        <ns3:name>
-          <ns5:given>Avery</ns5:given>
-          <ns5:surname>Single</ns5:surname>
-        </ns3:name>
-        <ns3:address locationCode="H" profileDefault="true">
+        <ns2:name>
+          <ns3:given>Avery</ns3:given>
+          <ns3:surname>Single</ns3:surname>
+        </ns2:name>
+        <ns2:address locationCode="H" profileDefault="true">
           <ns3:source>
-            <ns5:line1>101 Example Way</ns5:line1>
-            <ns5:locality1>Atlanta</ns5:locality1>
-            <ns5:region1>GA</ns5:region1>
-            <ns5:postalCode>30399</ns5:postalCode>
-            <ns5:country>US</ns5:country>
+            <ns3:line1>101 Example Way</ns3:line1>
+            <ns3:locality1>Atlanta</ns3:locality1>
+            <ns3:region1>GA</ns3:region1>
+            <ns3:postalCode>30399</ns3:postalCode>
+            <ns3:country>US</ns3:country>
           </ns3:source>
-        </ns3:address>
-        <ns3:phone number="+1 404 555 0101" type="MOBILE" location="H" profileDefault="true"/>
-        <ns3:email profileDefault="true">
-          <ns5:address>avery.single@example.test</ns5:address>
-        </ns3:email>
-        <ns3:membership code="PLACEHOLDER" value="900000011" status="ACTIVE"/>
+        </ns2:address>
+        <ns2:phone number="+1 404 555 0101" type="MOBILE" location="H" profileDefault="true"/>
+        <ns2:email profileDefault="true">
+          <ns2:address>avery.single@example.test</ns2:address>
+        </ns2:email>
+        <ns2:membership code="PLACEHOLDER" value="900000011" status="ACTIVE"/>
       </ns2:initiateGuest>
     </ns4:searchGuestResponse>
   </soap:Body>

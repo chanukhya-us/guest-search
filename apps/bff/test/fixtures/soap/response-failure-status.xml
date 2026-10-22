@@ -4,7 +4,7 @@
   WireMock scenario "Broken". Expected: UPSTREAM_TXN_FAILED with detail "1001" (Req 11.8, 11.9).
   The status code value is synthetic; the real code set is unknown until Blocker B2.
   A guest is present on purpose: it must NOT be returned when the status is a failure.
-  Synthetic data only. Provisional element placement until Blocker B1 (XSD).
+  Synthetic data only. Provisional placement mirroring the request sample (docs/Request.txt) until a response sample or XSD.
 -->
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
   <soap:Header/>

@@ -313,7 +313,7 @@ describe('buildSearchGuestRequest: namespaces (Req 9.1, 9.13)', () => {
       [...REQUEST_PATH, EL.allAttributes],
       [...REQUEST_PATH, EL.allHistory],
       [...REQUEST_PATH, EL.maxResults],
-      [EL.envelope, EL.soapHeader, EL.header],
+      [...REQUEST_PATH, EL.header],
     ];
     for (const path of paths) {
       expect(findAll(doc, path), path.map((e) => e.local).join('/')).toHaveLength(1);
@@ -321,16 +321,39 @@ describe('buildSearchGuestRequest: namespaces (Req 9.1, 9.13)', () => {
   });
 
   it('resolves through XPath prefixes that differ from the document prefixes', () => {
-    // `svc`, `complex` and `basic` are the NS keys; the document uses ns4, ns3 and ns5.
+    // `svc`, `initiate` and `complex` are the NS keys; the document uses ns4, ns2 and ns3.
     expect(xml).not.toContain('<svc:');
     const given = select(
       doc,
-      '/soap:Envelope/soap:Body/svc:searchGuestRequest/svc:searchCriteria/complex:name/basic:given',
+      '/soap:Envelope/soap:Body/svc:searchGuestRequest/svc:searchCriteria/initiate:name/complex:given',
     );
     expect(given.map((n) => n.textContent)).toEqual([COMBINED.firstName]);
-    // Same local name, different namespace: email/address (basic) is not the address group.
-    expect(select(doc, '//svc:searchCriteria/complex:email/basic:address')).toHaveLength(1);
-    expect(select(doc, '//svc:searchCriteria/complex:address')).toHaveLength(1);
+    // email/address and the address group share one identity (initiate:address), as in the
+    // sample; only their parent tells them apart.
+    expect(select(doc, '//svc:searchCriteria/initiate:email/initiate:address')).toHaveLength(1);
+    expect(select(doc, '//svc:searchCriteria/initiate:address')).toHaveLength(1);
+    expect(select(doc, '//initiate:address')).toHaveLength(2);
+  });
+
+  it('declares namespaces as the sample does: soap on the Envelope, the rest on the request', () => {
+    const declarations = (e: Element): Record<string, string> =>
+      Object.fromEntries(
+        Array.from(e.attributes)
+          .filter((a) => a.name === 'xmlns' || a.name.startsWith('xmlns:'))
+          .map((a) => [a.name, a.value]),
+      );
+    const envelope = one(xml, [EL.envelope]);
+    const request = one(xml, REQUEST_PATH);
+    expect(declarations(envelope)).toEqual({ 'xmlns:soap': NS.soap });
+    expect(Object.entries(declarations(request))).toEqual([
+      ['xmlns', NS.common],
+      ['xmlns:ns2', NS.initiate],
+      ['xmlns:ns3', NS.complex],
+      ['xmlns:ns4', NS.svc],
+      ['xmlns:ns5', NS.basic],
+    ]);
+    // No other element declares anything.
+    for (const e of descendantsAll(request)) expect(declarations(e), e.tagName).toEqual({});
   });
 });
 
@@ -340,31 +363,44 @@ function descendantsAll(root: Element): Element[] {
 }
 
 describe('buildSearchGuestRequest: envelope, header and fixed values (Req 9.12, 9.13)', () => {
-  it('writes envelope children Header then Body, and the request children in contract order', () => {
+  it('has no soap:Header; the request starts with header, then the contract order', () => {
     const xml = build(COMBINED);
-    expect(childIds(one(xml, [EL.envelope]))).toEqual(ids([EL.soapHeader, EL.body]));
+    expect(childIds(one(xml, [EL.envelope]))).toEqual(ids([EL.body]));
     expect(childIds(one(xml, [EL.envelope, EL.body]))).toEqual(ids([EL.searchGuestRequest]));
     expect(childIds(one(xml, REQUEST_PATH))).toEqual(
-      ids(ORDER.searchGuestRequest.map((k) => EL[k])),
+      ids([EL.header, EL.searchCriteria, EL.allAttributes, EL.allHistory, EL.maxResults]),
     );
+    expect(ORDER.searchGuestRequest.map((k) => EL[k])).toEqual([
+      EL.header,
+      EL.searchCriteria,
+      EL.allAttributes,
+      EL.allHistory,
+      EL.maxResults,
+    ]);
     expect(childIds(one(xml, CRITERIA_PATH))).toEqual(ids(ORDER.searchCriteria.map((k) => EL[k])));
   });
 
   it('embeds every header value from the header context, in contract order', () => {
-    const header = one(build(COMBINED), [EL.envelope, EL.soapHeader, EL.header]);
+    const header = one(build(COMBINED), [...REQUEST_PATH, EL.header]);
     expect(childIds(header)).toEqual(ids(ORDER.header.map((k) => EL[k])));
-    const values: Record<(typeof ORDER.header)[number], string> = {
-      headerTransactionId: REFERENCE_HEADER.transactionId,
-      headerSequence: String(REFERENCE_HEADER.sequence),
-      headerTimestamp: REFERENCE_HEADER.timestamp,
-      headerLanguageCode: REFERENCE_HEADER.languageCode,
-      headerCountryCode: REFERENCE_HEADER.countryCode,
-      headerChannel: REFERENCE_HEADER.channel,
-      headerSubChannel: REFERENCE_HEADER.subChannel,
-      headerEnvironment: REFERENCE_HEADER.environment,
-      headerServiceUser: REFERENCE_HEADER.serviceUser,
-    };
-    for (const key of ORDER.header) expect(text(find(header, [EL[key]])), key).toBe(values[key]);
+    const h = REFERENCE_HEADER;
+    const at = (key: (typeof ORDER.header)[number], name: string): string | undefined =>
+      attr(find(header, [EL[key]]), name);
+    expect(at('headerLanguage', 'isoCountryCode')).toBe(h.countryCode);
+    expect(at('headerLanguage', 'isoLanguageCode')).toBe(h.languageCode);
+    expect(at('headerChannel', 'name')).toBe(h.channel);
+    // Two nested subchannels in the reference header: channel > subChannel > subChannel.
+    expect(h.subChannels).toHaveLength(2);
+    const sub1 = [EL.headerChannel, EL.headerSubChannel];
+    expect(attr(find(header, sub1), 'name')).toBe(h.subChannels[0]);
+    expect(attr(find(header, [...sub1, EL.headerSubChannel]), 'name')).toBe(h.subChannels[1]);
+    expect(at('headerVersion', 'major')).toBe(DEFAULTS.headerVersionMajor);
+    expect(at('headerVersion', 'minor')).toBe(DEFAULTS.headerVersionMinor);
+    expect(at('headerEnvironment', 'name')).toBe(h.environment);
+    expect(at('headerUser', 'id')).toBe(h.serviceUser);
+    expect(at('headerTransactionId', 'id')).toBe(h.transactionId);
+    expect(at('headerTransactionSequence', 'number')).toBe(String(h.sequence));
+    expect(text(find(header, [EL.headerSendTimeStamp]))).toBe(h.timestamp);
   });
 
   it('emits allAttributes and allHistory from the contract', () => {
@@ -433,6 +469,6 @@ describe('reference-like text (regression for the P1 counterexample)', () => {
     expect(read.stateOrRegion).toBe('&amp;');
     expect(read.firstName).toBe('&lt;b&gt;');
     expect(read.phone).toBe('&#0;&quot;');
-    expect(text(descendants(parseXml(xml), EL.headerChannel)[0])).toBe('&amp;&');
+    expect(attr(descendants(parseXml(xml), EL.headerChannel)[0], 'name')).toBe('&amp;&');
   });
 });

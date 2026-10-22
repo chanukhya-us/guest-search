@@ -10,18 +10,31 @@
  * so the documented default applies (or the key is reported missing when required).
  */
 import { z } from 'zod';
+import {
+  DEFAULT_DEV_PERSONA,
+  DEV_PERSONAS,
+  DEV_PERSONA_IDS,
+  type DevPersonaId,
+} from './auth/devPersonas.js';
 import { StartupError } from './errors.js';
 
 export interface AppConfig {
   nodeEnv: 'development' | 'test' | 'production';
   port: number;
   trustProxy: boolean;
-  auth: { mode: 'dev' | 'oidc'; dev?: { userId: string; displayName: string; roles: string[] } };
+  /** `dev` is present only in dev mode: the persona chosen by `DEV_AUTH_PERSONA`. */
+  auth: {
+    mode: 'dev' | 'oidc';
+    dev?: { persona: DevPersonaId; userId: string; displayName: string; roles: string[] };
+  };
   /** `ttlMinutes` is the idle timeout; `absoluteHours` caps total session lifetime (Req 20.10). */
   session: { cookieName: string; ttlMinutes: number; absoluteHours: number; secret: string };
   soap: {
     endpoint: URL;
+    /** Sent verbatim as the SOAPAction HTTP header (the sample sends it unquoted). */
     soapAction: string;
+    /** Sent as the `IHG-ChannelId` HTTP header. */
+    channelId: string;
     connectTimeoutMs: number;
     responseTimeoutMs: number;
     maxResponseBytes: number;
@@ -32,7 +45,8 @@ export interface AppConfig {
       languageCode: string;
       countryCode: string;
       channel: string;
-      subChannel: string;
+      /** Ordered, outermost first; nested inside `channel` in the header. */
+      subChannels: string[];
       environment: string;
       serviceUser: string;
       sequence: number;
@@ -128,9 +142,7 @@ const envSchema = z
     TRUST_PROXY: bool.default(false),
 
     AUTH_MODE: z.enum(['dev', 'oidc']).default('dev'),
-    DEV_AUTH_USER_ID: text.default('dev-user-001'),
-    DEV_AUTH_DISPLAY_NAME: text.default('Dev Colleague'),
-    DEV_AUTH_ROLES: commaList.default(['GuestSearch.Read', 'GuestSearch.RevealPII']),
+    DEV_AUTH_PERSONA: z.enum(DEV_PERSONA_IDS).default(DEFAULT_DEV_PERSONA),
 
     SESSION_COOKIE_NAME: z
       .string()
@@ -141,7 +153,8 @@ const envSchema = z
     SESSION_SECRET: z.string().min(MIN_SESSION_SECRET_LENGTH),
 
     SOAP_ENDPOINT: httpUrl,
-    SOAP_ACTION: text,
+    SOAP_ACTION: text.default('searchGuest'),
+    SOAP_CHANNEL_ID: text.default('WEBWB'),
     SOAP_CONNECT_TIMEOUT_MS: int(1).default(3000),
     SOAP_RESPONSE_TIMEOUT_MS: int(1).default(10000),
     SOAP_MAX_RESPONSE_BYTES: int(1).default(2 * 1024 * 1024),
@@ -156,7 +169,7 @@ const envSchema = z
     SOAP_HEADER_LANGUAGE_CODE: text,
     SOAP_HEADER_COUNTRY_CODE: text,
     SOAP_HEADER_CHANNEL: text,
-    SOAP_HEADER_SUB_CHANNEL: text,
+    SOAP_HEADER_SUB_CHANNEL: commaList,
     SOAP_HEADER_ENVIRONMENT: text,
     SOAP_HEADER_SERVICE_USER: text,
     SOAP_HEADER_SEQUENCE: int(1).default(1),
@@ -228,6 +241,12 @@ function configError(missing: string[], invalid: string[]): StartupError {
   return new StartupError(`Invalid configuration (${parts.join('; ')})`, { missing, invalid });
 }
 
+/** Copy of the selected synthetic persona (Req 20.3); the catalog itself stays frozen. */
+function devIdentity(id: DevPersonaId): NonNullable<AppConfig['auth']['dev']> {
+  const p = DEV_PERSONAS[id];
+  return { persona: id, userId: p.userId, displayName: p.displayName, roles: [...p.roles] };
+}
+
 function toAppConfig(e: Env): AppConfig {
   const tls = {
     ...(e.SOAP_TLS_CA_FILE !== undefined && { caFile: e.SOAP_TLS_CA_FILE }),
@@ -241,13 +260,7 @@ function toAppConfig(e: Env): AppConfig {
     trustProxy: e.TRUST_PROXY,
     auth: {
       mode: e.AUTH_MODE,
-      ...(e.AUTH_MODE === 'dev' && {
-        dev: {
-          userId: e.DEV_AUTH_USER_ID,
-          displayName: e.DEV_AUTH_DISPLAY_NAME,
-          roles: e.DEV_AUTH_ROLES,
-        },
-      }),
+      ...(e.AUTH_MODE === 'dev' && { dev: devIdentity(e.DEV_AUTH_PERSONA) }),
     },
     session: {
       // Plain-HTTP localhost cannot set __Host- cookies; task 8.2 enforces the attributes.
@@ -261,6 +274,7 @@ function toAppConfig(e: Env): AppConfig {
     soap: {
       endpoint: e.SOAP_ENDPOINT,
       soapAction: e.SOAP_ACTION,
+      channelId: e.SOAP_CHANNEL_ID,
       connectTimeoutMs: e.SOAP_CONNECT_TIMEOUT_MS,
       responseTimeoutMs: e.SOAP_RESPONSE_TIMEOUT_MS,
       maxResponseBytes: e.SOAP_MAX_RESPONSE_BYTES,
@@ -275,7 +289,7 @@ function toAppConfig(e: Env): AppConfig {
         languageCode: e.SOAP_HEADER_LANGUAGE_CODE,
         countryCode: e.SOAP_HEADER_COUNTRY_CODE,
         channel: e.SOAP_HEADER_CHANNEL,
-        subChannel: e.SOAP_HEADER_SUB_CHANNEL,
+        subChannels: e.SOAP_HEADER_SUB_CHANNEL,
         environment: e.SOAP_HEADER_ENVIRONMENT,
         serviceUser: e.SOAP_HEADER_SERVICE_USER,
         sequence: e.SOAP_HEADER_SEQUENCE,

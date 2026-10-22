@@ -3,16 +3,20 @@
  * contain SOAP namespace URIs, fixed attribute values or status codes (Req 7.6). The request
  * mapper, header builder and response parser obtain every element identity from `EL` (Req 7.4).
  *
- * PROVISIONAL CONTRACT. Every `EL` entry has `verified: false` (Req 7.5) because the
- * source-of-truth artifacts are not supplied yet:
- *   - B1: WSDL + XSDs (`/schemas`). Element names, namespaces, order, cardinality, types.
- *   - B2: sanitized request/response samples (`/samples`). Namespace aliases, header shape,
- *         `transactionStatus` examples. Header child elements (`header*` entries) are
- *         provisional names; the credential has no location until B5/B6 define one.
- *   - B3: approved mapping doc (`/docs`). Request validity of `line1`, `locality1` and
- *         `postalCode`; the Address Line 2 element (never invented, see Req 9.6).
- * The namespace URIs and the alias table come from copilot-instructions.md §5 (approved
- * sample); the placement of each element in a namespace is inferred and unconfirmed.
+ * PARTLY VERIFIED CONTRACT (Req 7.5).
+ *   - Request side: the project team's only real sample request, `docs/Request.txt` (a curl
+ *     command), is the source of truth until B1 arrives. Every element that appears in it is
+ *     `verified: true, xsd: 'sample:docs/Request.txt'`: envelope, body, the in-body `header`
+ *     and its children, searchCriteria and its groups, allAttributes, allHistory, maxResults.
+ *     `line1`, `locality1` and `postalCode` are NOT in the sample; their placement (complex,
+ *     like `region1`/`country`) is inferred, so they stay `verified: false`.
+ *   - Response side: there is no response sample. The `guest*` identities mirror the request
+ *     sample (groups in initiate, their children in complex) and stay `verified: false`.
+ *   - Still open: B1 (WSDL + XSDs: order, cardinality, types), B2 for the response
+ *     (`transactionStatus` placement, guest children), B3 (request validity of `line1`,
+ *     `locality1`, `postalCode`; Address Line 2 is never invented, Req 9.6) and B5/B6 (the
+ *     credential has no location).
+ * The namespace URIs and the alias table match copilot-instructions.md §5 and the sample.
  *
  * How to verify an element once B1 arrives:
  *   1. Find the global element (or the complexType holding it as a local element) in the
@@ -64,98 +68,108 @@ export interface El {
   readonly xsd?: string;
 }
 
+/** An identity whose placement is inferred, not yet confirmed by the XSD or a sample. */
 const el = (ns: NsKey | null, local: string): El => ({ ns, local, verified: false });
+
+/** Where the sample-confirmed identities come from (`El.xsd`). */
+export const SAMPLE_SOURCE = 'sample:docs/Request.txt';
+
+/** An identity confirmed by the team's sample request (docs/Request.txt). */
+const sample = (ns: NsKey, local: string): El => ({
+  ns,
+  local,
+  verified: true,
+  xsd: SAMPLE_SOURCE,
+});
 
 /** Namespace URI of an element, or `null` when it is unqualified (as xmldom reports it). */
 export const nsUri = (e: El): string | null => (e.ns === null ? null : NS[e.ns]);
 
 export const EL = {
-  // SOAP 1.1 envelope. Per SOAP 1.1, Fault children are unqualified.
-  envelope: el('soap', 'Envelope'),
-  soapHeader: el('soap', 'Header'),
-  body: el('soap', 'Body'),
+  // SOAP 1.1 envelope. The sample has no soap:Header. Per SOAP 1.1, Fault children are
+  // unqualified.
+  envelope: sample('soap', 'Envelope'),
+  body: sample('soap', 'Body'),
   fault: el('soap', 'Fault'),
   faultcode: el(null, 'faultcode'),
 
-  // Request: searchGuestRequest
-  searchGuestRequest: el('svc', 'searchGuestRequest'),
-  searchCriteria: el('svc', 'searchCriteria'),
-  name: el('complex', 'name'),
-  given: el('basic', 'given'),
-  surname: el('basic', 'surname'),
-  phone: el('complex', 'phone'),
-  email: el('complex', 'email'),
-  emailAddress: el('basic', 'address'),
-  address: el('complex', 'address'),
-  source: el('complex', 'source'),
-  line1: el('basic', 'line1'),
-  locality1: el('basic', 'locality1'),
-  region1: el('basic', 'region1'),
-  postalCode: el('basic', 'postalCode'),
-  country: el('basic', 'country'),
-  membership: el('complex', 'membership'),
-  allAttributes: el('svc', 'allAttributes'),
-  allHistory: el('svc', 'allHistory'),
-  maxResults: el('svc', 'maxResults'),
+  // Request: searchGuestRequest (all from the sample except line1, locality1, postalCode).
+  searchGuestRequest: sample('svc', 'searchGuestRequest'),
+  searchCriteria: sample('svc', 'searchCriteria'),
+  name: sample('initiate', 'name'),
+  given: sample('complex', 'given'),
+  surname: sample('complex', 'surname'),
+  phone: sample('initiate', 'phone'),
+  email: sample('initiate', 'email'),
+  // Same identity as `address` (both initiate:address); told apart by their parent.
+  emailAddress: sample('initiate', 'address'),
+  address: sample('initiate', 'address'),
+  source: sample('complex', 'source'),
+  line1: el('complex', 'line1'),
+  locality1: el('complex', 'locality1'),
+  region1: sample('complex', 'region1'),
+  postalCode: el('complex', 'postalCode'),
+  country: sample('complex', 'country'),
+  membership: sample('initiate', 'membership'),
+  allAttributes: sample('svc', 'allAttributes'),
+  allHistory: sample('svc', 'allHistory'),
+  maxResults: sample('svc', 'maxResults'),
 
-  // Response: searchGuestResponse
+  // Request header: the FIRST child of searchGuestRequest, in common (the default
+  // namespace). Every value is an attribute except sendTimeStamp, which is text.
+  // No credential element exists until B5/B6 define one (see HEADER_CREDENTIAL_LOCATION).
+  header: sample('common', 'header'),
+  headerLanguage: sample('common', 'language'),
+  headerChannel: sample('common', 'channel'),
+  // Nested: channel > subChannel > subChannel ... (one per configured subchannel).
+  headerSubChannel: sample('common', 'subChannel'),
+  headerVersion: sample('common', 'headerVersion'),
+  headerEnvironment: sample('common', 'environment'),
+  // The configured service user (not a personal ID), in user/@id.
+  headerUser: sample('common', 'user'),
+  headerTransactionId: sample('common', 'transactionId'),
+  headerTransactionSequence: sample('common', 'transactionSequence'),
+  headerSendTimeStamp: sample('common', 'sendTimeStamp'),
+
+  // Response: searchGuestResponse. No response sample exists: every entry is unverified.
   searchGuestResponse: el('svc', 'searchGuestResponse'),
   transactionStatus: el('common', 'transactionStatus'),
   initiateGuest: el('initiate', 'initiateGuest'),
   enterpriseId: el('initiate', 'enterpriseId'),
-  // Children of initiateGuest. Kept separate from the request entries because the response
-  // type may place them differently; placement mirrors the request until B1/B2.
-  guestName: el('complex', 'name'),
-  guestGiven: el('basic', 'given'),
-  guestSurname: el('basic', 'surname'),
-  guestAddress: el('complex', 'address'),
+  // Children of initiateGuest: mirrors request sample; confirm with response sample.
+  // Kept separate from the request entries because the response type may differ.
+  guestName: el('initiate', 'name'),
+  guestGiven: el('complex', 'given'),
+  guestSurname: el('complex', 'surname'),
+  guestAddress: el('initiate', 'address'),
   guestAddressSource: el('complex', 'source'),
-  guestLine1: el('basic', 'line1'),
-  guestLocality1: el('basic', 'locality1'),
-  guestRegion1: el('basic', 'region1'),
-  guestPostalCode: el('basic', 'postalCode'),
-  guestCountry: el('basic', 'country'),
-  guestPhone: el('complex', 'phone'),
-  guestEmail: el('complex', 'email'),
-  guestEmailAddress: el('basic', 'address'),
-  guestMembership: el('complex', 'membership'),
-
-  // Header container (name provisional until sample/XSD; Blocker B2).
-  header: el('common', 'header'),
-  // Header children. Blocker B2: provisional, replace from sample.
-  // copilot-instructions.md §6 lists the header VALUES (language and country code, channel,
-  // subchannel, environment, service user, transaction ID, sequence, send timestamp) but not
-  // their element names, structure or namespace. The local names below mirror the
-  // HeaderContext fields; namespace `common` is assumed. No credential element exists until
-  // B5/B6 define one (see HEADER_CREDENTIAL_LOCATION).
-  headerTransactionId: el('common', 'transactionId'),
-  headerSequence: el('common', 'sequence'),
-  headerTimestamp: el('common', 'timestamp'),
-  headerLanguageCode: el('common', 'languageCode'),
-  headerCountryCode: el('common', 'countryCode'),
-  headerChannel: el('common', 'channel'),
-  headerSubChannel: el('common', 'subChannel'),
-  headerEnvironment: el('common', 'environment'),
-  headerServiceUser: el('common', 'serviceUser'),
+  guestLine1: el('complex', 'line1'),
+  guestLocality1: el('complex', 'locality1'),
+  guestRegion1: el('complex', 'region1'),
+  guestPostalCode: el('complex', 'postalCode'),
+  guestCountry: el('complex', 'country'),
+  guestPhone: el('initiate', 'phone'),
+  guestEmail: el('initiate', 'email'),
+  guestEmailAddress: el('initiate', 'address'),
+  guestMembership: el('initiate', 'membership'),
 } as const satisfies Record<string, El>;
 
 export type ElKey = keyof typeof EL;
 
-/** Child order within searchCriteria and searchGuestRequest (Req 9.13). */
+/** Child order (Req 9.13), as in the sample request. */
 export const ORDER = {
   searchCriteria: ['name', 'phone', 'email', 'address', 'membership'],
-  searchGuestRequest: ['searchCriteria', 'allAttributes', 'allHistory', 'maxResults'],
-  // Blocker B2: provisional, replace from sample/XSD.
+  searchGuestRequest: ['header', 'searchCriteria', 'allAttributes', 'allHistory', 'maxResults'],
+  // headerSubChannel is nested inside headerChannel, so it is not a direct header child.
   header: [
-    'headerTransactionId',
-    'headerSequence',
-    'headerTimestamp',
-    'headerLanguageCode',
-    'headerCountryCode',
+    'headerLanguage',
     'headerChannel',
-    'headerSubChannel',
+    'headerVersion',
     'headerEnvironment',
-    'headerServiceUser',
+    'headerUser',
+    'headerTransactionId',
+    'headerTransactionSequence',
+    'headerSendTimeStamp',
   ],
 } as const satisfies Record<string, readonly ElKey[]>;
 
@@ -182,6 +196,9 @@ export const DEFAULTS = {
   addressProfileDefault: 'true',
   allAttributes: 'true',
   allHistory: 'false',
+  // header/headerVersion/@major and @minor (sample: 1.0).
+  headerVersionMajor: '1',
+  headerVersionMinor: '0',
 } as const;
 
 /** Application-level success indicators on transactionStatus (Req 7.3). */

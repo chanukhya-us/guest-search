@@ -59,8 +59,8 @@ describe.skipIf(!schemasPresent)(
 // ---------------------------------------------------------------------------------------------
 // Harness self-test: proves discovery, preloaded imports, payload extraction and xmllint-wasm
 // validation work before B1 arrives. The schemas are synthetic and test-only: the entry schema
-// declares searchGuestRequest in NS.svc with the contract's child order and leaves
-// searchCriteria content unchecked; the imported schema (a test-only namespace) types
+// declares searchGuestRequest in NS.svc with the contract's child order (a skipped header in
+// NS.common first) and leaves header and searchCriteria content unchecked; the imported schema (a test-only namespace) types
 // maxResults, so a passing document proves the preloaded import resolved.
 // ---------------------------------------------------------------------------------------------
 
@@ -86,6 +86,8 @@ const SYNTHETIC_SVC: SchemaFile = {
     '  <xs:import namespace="' + TYPES_NS + '" schemaLocation="synthetic-types.xsd"/>',
     '  <xs:element name="searchGuestRequest">',
     '    <xs:complexType><xs:sequence>',
+    // The in-body header (common namespace) comes first, as in docs/Request.txt.
+    '      <xs:any namespace="' + NS.common + '" processContents="skip"/>',
     '      <xs:element name="searchCriteria">',
     '        <xs:complexType>',
     '          <xs:sequence>',
@@ -109,6 +111,7 @@ const SYNTHETIC_FILES = [SYNTHETIC_TYPES, SYNTHETIC_SVC];
 const minimal = (maxResults: string, root = 'searchGuestRequest'): string =>
   [
     '<s:' + root + ' xmlns:s="' + NS.svc + '">',
+    '<header xmlns="' + NS.common + '"/>',
     '<s:searchCriteria status="O"/>',
     '<s:allAttributes>true</s:allAttributes>',
     '<s:allHistory>false</s:allHistory>',

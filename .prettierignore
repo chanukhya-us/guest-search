@@ -14,3 +14,8 @@ samples/
 # Upstream error bodies (for example the 502 proxy page) are served byte-for-byte too.
 **/test/fixtures/**/*.html
 **/__snapshots__/**/*.xml
+# Snapshot copies of the Kiro spec (.kiro/specs/ihg-guest-search), committed in 000e1fd.
+# Kept byte-identical to the spec format; not project-authored docs.
+docs/requirements.md
+docs/design.md
+docs/tasks.md

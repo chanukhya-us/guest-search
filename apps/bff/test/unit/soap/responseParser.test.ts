@@ -9,6 +9,7 @@ import {
   STATUS_MISSING,
   SoapError,
   interpretTransactionStatus,
+  isToleratedWarning,
   parseSearchGuestResponse,
 } from '../../../src/soap/responseParser.js';
 
@@ -36,20 +37,20 @@ const response = (guests: string, txn = status()): string =>
 const GUEST_FULL =
   `<ns2:initiateGuest score="97.5" status="A" gender="F">` +
   `<ns2:enterpriseId> 900000001 </ns2:enterpriseId>` +
-  `<ns3:name><ns5:given>Ada</ns5:given><ns5:surname>Example</ns5:surname></ns3:name>` +
-  `<ns3:name><ns5:given>Second</ns5:given></ns3:name>` +
-  `<ns3:address locationCode="H" profileDefault="false"><ns3:source><ns5:line1>1 Test St</ns5:line1>` +
-  `<ns5:locality1>Atlanta</ns5:locality1><ns5:region1>GA</ns5:region1>` +
-  `<ns5:postalCode>30301</ns5:postalCode><ns5:country>US</ns5:country></ns3:source></ns3:address>` +
-  `<ns3:address profileDefault="true"><ns3:source><ns5:line1>2 Test St</ns5:line1></ns3:source></ns3:address>` +
-  `<ns3:phone number="+1 404 555 0101" type="MOBILE" location="H" profileDefault="true"/>` +
-  `<ns3:phone number="+1 404 555 0101" profileDefault="maybe"/>` +
-  `<ns3:phone type="WORK"/>` +
-  `<ns3:email profileDefault="true"><ns5:address>ada@example.test</ns5:address></ns3:email>` +
-  `<ns3:email><ns5:address>   </ns5:address></ns3:email>` +
-  `<ns3:membership code="PC" value="900000011" status="ACTIVE"/>` +
-  `<ns3:membership code="AMB"/>` +
-  `<ns3:creditCard token="${CARD_TOKEN}"><ns5:number>${CARD_TOKEN}</ns5:number></ns3:creditCard>` +
+  `<ns2:name><ns3:given>Ada</ns3:given><ns3:surname>Example</ns3:surname></ns2:name>` +
+  `<ns2:name><ns3:given>Second</ns3:given></ns2:name>` +
+  `<ns2:address locationCode="H" profileDefault="false"><ns3:source><ns3:line1>1 Test St</ns3:line1>` +
+  `<ns3:locality1>Atlanta</ns3:locality1><ns3:region1>GA</ns3:region1>` +
+  `<ns3:postalCode>30301</ns3:postalCode><ns3:country>US</ns3:country></ns3:source></ns2:address>` +
+  `<ns2:address profileDefault="true"><ns3:source><ns3:line1>2 Test St</ns3:line1></ns3:source></ns2:address>` +
+  `<ns2:phone number="+1 404 555 0101" type="MOBILE" location="H" profileDefault="true"/>` +
+  `<ns2:phone number="+1 404 555 0101" profileDefault="maybe"/>` +
+  `<ns2:phone type="WORK"/>` +
+  `<ns2:email profileDefault="true"><ns2:address>ada@example.test</ns2:address></ns2:email>` +
+  `<ns2:email><ns2:address>   </ns2:address></ns2:email>` +
+  `<ns2:membership code="PC" value="900000011" status="ACTIVE"/>` +
+  `<ns2:membership code="AMB"/>` +
+  `<ns2:creditCard token="${CARD_TOKEN}"><ns3:number>${CARD_TOKEN}</ns3:number></ns2:creditCard>` +
   `</ns2:initiateGuest>`;
 
 const GUEST_MIN = `<ns2:initiateGuest score="n/a"/>`;
@@ -244,6 +245,42 @@ describe('parseSearchGuestResponse: errors (Req 11)', () => {
     const err = soapError(() => parseSearchGuestResponse(`<x>${CARD_TOKEN}`));
     expect(err.message).not.toContain(CARD_TOKEN);
     expect(err.cause).toBeUndefined();
+  });
+});
+
+describe('xmldom diagnostics: only the U+FFFD warning is tolerated (user decision)', () => {
+  it('maps text and attributes that contain U+FFFD', () => {
+    const guest =
+      `<ns2:initiateGuest><ns2:enterpriseId>900000001</ns2:enterpriseId>` +
+      `<ns2:name><ns3:given>A\uFFFDa</ns3:given></ns2:name>` +
+      `<ns2:phone number="+1 404 555 0101" type="M\uFFFD"/></ns2:initiateGuest>`;
+    const [g] = parseSearchGuestResponse(response(guest));
+    expect(g?.firstName).toBe('A\uFFFDa');
+    expect(g?.phones).toEqual([{ number: '+1 404 555 0101', type: 'M\uFFFD' }]);
+  });
+
+  it.each([
+    [
+      'another xmldom warning (missing attribute space)',
+      response('<ns2:initiateGuest a="1"b="2"/>'),
+    ],
+    ['another warning next to U+FFFD', response('<ns2:initiateGuest a="\uFFFD"b="2"/>')],
+    [
+      'a fatal error next to U+FFFD',
+      response(GUEST_MIN).replace('</soap:Body>', '\uFFFD</soap:Bod>'),
+    ],
+    ['truncated XML with U+FFFD', response(GUEST_FULL).slice(0, 200) + '\uFFFD'],
+  ])('%s -> UPSTREAM_MALFORMED', (_label, xml) => {
+    expect(parseCode(xml)).toBe('UPSTREAM_MALFORMED');
+  });
+
+  it('isToleratedWarning matches the warning level and the U+FFFD message only', () => {
+    const msg = 'Unicode replacement character detected, source encoding issues?';
+    expect(isToleratedWarning('warning', msg)).toBe(true);
+    expect(isToleratedWarning('error', msg)).toBe(false);
+    expect(isToleratedWarning('fatalError', msg)).toBe(false);
+    expect(isToleratedWarning('warning', 'attribute space is required"a"!!')).toBe(false);
+    expect(isToleratedWarning('warning', 'x ' + msg)).toBe(false);
   });
 });
 
